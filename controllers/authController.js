@@ -146,6 +146,28 @@ async function deleteCoordinator(call, callback) {
   }
 }
 
+async function loginHttp(email, password) {
+  try {
+    const user = await authService.login(email, password);
+
+    return {
+      message: "Login successful",
+      role: user.role,
+      id: user.id,
+      staffId: user.staffId || 0,
+      requiresInitialPassword: user.requiresInitialPassword || false,
+    };
+  } catch (error) {
+    return {
+      message: error.message,
+      role: "",
+      id: 0,
+      staffId: 0,
+      requiresInitialPassword: false,
+    };
+  }
+}
+
 module.exports = {
   signup,
   login,
@@ -153,5 +175,6 @@ module.exports = {
   getCoordinatorUser,
   checkInitialPasswordStatus,
   createCoordinator,
-  deleteCoordinator
+  deleteCoordinator,
+  loginHttp
 };

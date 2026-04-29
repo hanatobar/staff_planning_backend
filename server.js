@@ -170,6 +170,19 @@ app.get("/", (req, res) => {
   res.send("Backend is running");
 });
 
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const result = await authController.loginHttp(email, password);
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Login failed" });
+  }
+});
+
 const HTTP_PORT = process.env.PORT || 3000;
 
 app.listen(HTTP_PORT, "0.0.0.0", () => {
