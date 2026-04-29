@@ -170,10 +170,9 @@ app.get("/", (req, res) => {
   res.send("Backend is running");
 });
 
-// Use Render port
-const HTTP_PORT = process.env.PORT ;
+const HTTP_PORT = process.env.PORT || 3000;
 
-app.listen(HTTP_PORT, () => {
+app.listen(HTTP_PORT, "0.0.0.0", () => {
   console.log(`HTTP server running on port ${HTTP_PORT}`);
 });
 
