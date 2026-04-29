@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+service StaffService {
+  rpc AddStaff (AddStaffRequest) returns (StaffResponse);
+  rpc GetAllStaff (Empty) returns (StaffList);
+  rpc DeleteStaff (StaffId) returns (StaffResponse);
+  rpc UpdateStaff (UpdateStaffRequest) returns (StaffResponse);
+  rpc UpdateTaPriorityOrder (UpdateTaPriorityOrderRequest) returns (StaffResponse);
+}
+
+message AddStaffRequest {
+  string name = 1;
+  string email = 2;
+  string role = 3;
+  int32 max_workload = 4;
+  int32 priority_rank = 5;
+}
+
+message UpdateStaffRequest {
+  int32 id = 1;
+  string name = 2;
+  string email = 3;
+  string role = 4;
+  int32 max_workload = 5;
+  int32 priority_rank = 6;
+}
+
+message UpdateTaPriorityOrderRequest {
+  repeated int32 staff_ids = 1;
+}
+
+message StaffResponse {
+  string message = 1;
+}
+
+message Staff {
+  int32 id = 1;
+  string name = 2;
+  string email = 3;
+  string role = 4;
+  int32 max_workload = 5;
+  int32 user_id = 6;
+  int32 priority_rank = 7;
+}
+
+message StaffList {
+  repeated Staff staff = 1;
+}
+
+message StaffId {
+  int32 id = 1;
+}
+
+message Empty {}

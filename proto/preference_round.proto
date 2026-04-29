@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package preference_round;
+
+service PreferenceRoundService {
+  rpc OpenRound (OpenRoundRequest) returns (Response);
+  rpc LockRound (UserRequest) returns (Response);
+  rpc GetCurrentRound (EmptyRequest) returns (Round);
+  rpc GetSubmissionStatus (RoundRequest) returns (TrackingList);
+}
+
+message OpenRoundRequest {
+  string startAt = 1;
+  string endAt = 2;
+  int32 userId = 3;
+  string conflictResolutionMode = 4;
+  string semester = 5;
+}
+
+message UserRequest {
+  int32 userId = 1;
+}
+
+message RoundRequest {
+  int32 roundId = 1;
+}
+
+message Round {
+  int32 id = 1;
+  string startAt = 2;
+  string endAt = 3;
+  bool isLocked = 4;
+  string conflictResolutionMode = 5;
+  string semester = 6;
+}
+
+message Tracking {
+  int32 id = 1;
+  int32 staffId = 2;
+  string staffName = 3;
+  string staffEmail = 4;
+  string status = 5;
+  bool isValid = 6;
+  string submittedAt = 7;
+}
+
+message TrackingList {
+  repeated Tracking tracking = 1;
+}
+
+message Response {
+  string message = 1;
+}
+
+message EmptyRequest {}

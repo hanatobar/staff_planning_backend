@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package course_requirement;
+
+service CourseRequirementService {
+
+  rpc AddRequirement (AddRequirementRequest) returns (Response);
+
+  rpc GetAllRequirements (EmptyRequest) returns (RequirementList);
+  
+  rpc UpdateRequirement (UpdateRequirementRequest) returns (Response);
+}
+
+message AddRequirementRequest {
+  int32 courseId = 1;
+  int32 requiredHours = 2;
+}
+
+message UpdateRequirementRequest {
+  int32 id = 1;
+  int32 requiredHours = 2;
+}
+
+message Requirement {
+  int32 id = 1;
+  int32 courseId = 2;
+  int32 requiredHours = 3;
+  string courseName = 4;
+}
+
+message RequirementList {
+  repeated Requirement requirements = 1;
+}
+
+message Response {
+  string message = 1;
+}
+
+message EmptyRequest {}
