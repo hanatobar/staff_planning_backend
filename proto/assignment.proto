@@ -1,0 +1,215 @@
+syntax = "proto3";
+
+package assignment;
+
+service AssignmentService {
+  rpc GeneratePlan (EmptyRequest) returns (Response);
+  rpc GetAssignments (EmptyRequest) returns (AssignmentList);
+  rpc GetAnalytics (EmptyRequest) returns (AnalyticsResponse);
+  rpc GetAssignmentsByStaff (StaffRequest) returns (AssignmentList);
+  rpc GetConflicts (EmptyRequest) returns (ConflictList);
+  rpc ApprovePlan (EmptyRequest) returns (Response);
+  rpc GetNonSubmitters (EmptyRequest) returns (NonSubmitterList);
+  rpc GetUncoveredHours (EmptyRequest) returns (UncoveredHourList);
+  rpc AssignUncoveredHours (ManualUncoveredRequest) returns (Response);
+  rpc TransferAssignmentHours (ManualTransferRequest) returns (Response);
+
+  rpc SubmitAppeal (SubmitAppealRequest) returns (Response);
+  rpc GetAppealsByStaff (StaffRequest) returns (AppealList);
+  rpc GetAllAppeals (EmptyRequest) returns (AppealList);
+  rpc ReviewAppeal (ReviewAppealRequest) returns (Response);
+  rpc ResolveAppeal (ResolveAppealRequest) returns (Response);
+  rpc GetAppealDetails (AppealIdRequest) returns (AppealDetailsResponse);
+}
+
+message Assignment {
+  int32 id = 1;
+  int32 staffId = 2;
+  int32 courseId = 3;
+  int32 assignedHours = 4;
+  string staffName = 5;
+  string courseName = 6;
+  string status = 7;
+}
+
+message Conflict {
+  int32 id = 1;
+  int32 courseId = 2;
+  string courseName = 3;
+  int32 preferenceLevel = 4;
+  int32 chosenStaffId = 5;
+  string chosenStaffName = 6;
+  string resolutionMethod = 7;
+  string status = 8;
+  string involvedStaffNames = 9;
+}
+
+message ConflictList {
+  repeated Conflict conflicts = 1;
+}
+
+message StaffRequest {
+  int32 staffId = 1;
+}
+
+message AssignmentList {
+  repeated Assignment assignments = 1;
+}
+
+message AssignmentId {
+  int32 id = 1;
+}
+
+message Response {
+  string message = 1;
+}
+
+message TAStat {
+  int32 id = 1;
+  string name = 2;
+  int32 assigned = 3;
+  int32 max = 4;
+  double ratio = 5;
+}
+
+message CourseStat {
+  int32 course_id = 1;
+  string courseName = 2;
+  int32 assigned = 3;
+  int32 required = 4;
+  int32 taCount = 5;
+}
+
+message FairnessSummary {
+  double maxRatio = 1;
+  double minRatio = 2;
+  double ratioGap = 3;
+  int32 maxAssigned = 4;
+  int32 minAssigned = 5;
+  int32 hourGap = 6;
+}
+
+message AnalyticsResponse {
+  repeated TAStat taStats = 1;
+  repeated CourseStat courseStats = 2;
+  FairnessSummary fairnessSummary = 3;
+}
+
+message NonSubmitter {
+  int32 staffId = 1;
+  string staffName = 2;
+  string staffEmail = 3;
+}
+
+message NonSubmitterList {
+  repeated NonSubmitter staff = 1;
+}
+
+message UncoveredHour {
+  int32 courseId = 1;
+  string courseName = 2;
+  int32 requiredHours = 3;
+  int32 assignedHours = 4;
+  int32 uncoveredHours = 5;
+}
+
+message UncoveredHourList {
+  repeated UncoveredHour items = 1;
+}
+
+message ManualUncoveredRequest {
+  int32 targetStaffId = 1;
+  int32 courseId = 2;
+  int32 hours = 3;
+}
+
+message ManualTransferRequest {
+  int32 sourceAssignmentId = 1;
+  int32 targetStaffId = 2;
+  int32 hours = 3;
+}
+
+message SubmitAppealRequest {
+  int32 assignmentId = 1;
+  int32 staffId = 2;
+  int32 appealedHours = 3;
+  string reason = 4;
+}
+
+message ReviewAppealRequest {
+  int32 appealId = 1;
+  string status = 2; // APPROVED or REJECTED
+  string coordinatorResponse = 3;
+  int32 reviewedByUserId = 4;
+}
+
+message Appeal {
+  int32 id = 1;
+  int32 assignmentId = 2;
+  int32 staffId = 3;
+  int32 roundId = 4;
+  int32 appealedHours = 5;
+  string reason = 6;
+  string status = 7;
+  string coordinatorResponse = 8;
+  int32 reviewedByUserId = 9;
+  string createdAt = 10;
+  string reviewedAt = 11;
+  string staffName = 12;
+  string courseName = 13;
+}
+
+message AppealList {
+  repeated Appeal appeals = 1;
+}
+
+message AppealRedistributionItem {
+  int32 targetStaffId = 1;
+  int32 hours = 2;
+}
+
+message AppealCompensationItem {
+  string sourceType = 1; // "UNCOVERED" or "TRANSFER"
+  int32 courseId = 2; // used when sourceType = "UNCOVERED"
+  int32 sourceAssignmentId = 3; // used when sourceType = "TRANSFER"
+  int32 hours = 4;
+}
+
+message ResolveAppealRequest {
+  int32 appealId = 1;
+  int32 reviewedByUserId = 2;
+  string coordinatorResponse = 3;
+  repeated AppealRedistributionItem redistributions = 4;
+  repeated AppealCompensationItem compensations = 5;
+}
+
+message AppealIdRequest {
+  int32 appealId = 1;
+}
+
+message AppealRedistributionDetail {
+  int32 id = 1;
+  int32 appealId = 2;
+  int32 targetStaffId = 3;
+  string targetStaffName = 4;
+  int32 hours = 5;
+}
+
+message AppealCompensationDetail {
+  int32 id = 1;
+  int32 appealId = 2;
+  string sourceType = 3;
+  int32 courseId = 4;
+  string courseName = 5;
+  int32 sourceAssignmentId = 6;
+  int32 sourceStaffId = 7;
+  string sourceStaffName = 8;
+  int32 hours = 9;
+}
+
+message AppealDetailsResponse {
+  repeated AppealRedistributionDetail redistributions = 1;
+  repeated AppealCompensationDetail compensations = 2;
+}
+
+message EmptyRequest {}

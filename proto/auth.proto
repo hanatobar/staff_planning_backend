@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package auth;
+
+service AuthService {
+  rpc Signup (SignupRequest) returns (AuthResponse);
+  rpc Login (LoginRequest) returns (AuthResponse);
+  rpc SetInitialPassword (SetInitialPasswordRequest) returns (AuthResponse);
+  rpc GetCoordinatorUser (EmptyRequest) returns (AuthUserResponse);
+  rpc CheckInitialPasswordStatus (EmailRequest) returns (InitialPasswordStatusResponse);
+  rpc CreateCoordinator (CreateCoordinatorRequest) returns (AuthResponse);
+  rpc DeleteCoordinator (EmptyRequest) returns (AuthResponse);
+}
+
+message SignupRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+  string role = 4;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message SetInitialPasswordRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message CreateCoordinatorRequest {
+  string name = 1;
+  string email = 2;
+}
+
+message AuthResponse {
+  string message = 1;
+  string role = 2;
+  int32 id = 3;
+  int32 staffId = 4;
+  bool requiresInitialPassword = 5;
+}
+
+message EmptyRequest {}
+
+message AuthUserResponse {
+  string message = 1;
+  int32 id = 2;
+  string name = 3;
+  string email = 4;
+  string role = 5;
+}
+
+message EmailRequest {
+  string email = 1;
+}
+
+message InitialPasswordStatusResponse {
+  string message = 1;
+  bool accountExists = 2;
+  bool requiresInitialPassword = 3;
+  string role = 4;
+}

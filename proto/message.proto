@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package message;
+
+service MessageService {
+  rpc SendMessage (SendMessageRequest) returns (Response);
+  rpc GetConversation (ConversationRequest) returns (MessageList);
+  rpc GetInbox (UserRequest) returns (ConversationPreviewList);
+  rpc MarkConversationAsRead (ConversationRequest) returns (Response);
+  rpc GetUnreadMessageCount (UserRequest) returns (UnreadCountResponse);
+}
+
+message SendMessageRequest {
+  int32 senderUserId = 1;
+  int32 receiverUserId = 2;
+  string content = 3;
+
+  int32 assignmentId = 4;
+  int32 appealId = 5;
+  int32 conflictId = 6;
+  int32 roundId = 7;
+}
+
+message ConversationRequest {
+  int32 userId = 1;
+  int32 otherUserId = 2;
+}
+
+message UserRequest {
+  int32 userId = 1;
+}
+
+message Response {
+  string message = 1;
+}
+
+message ChatMessage {
+  int32 id = 1;
+  int32 senderUserId = 2;
+  int32 receiverUserId = 3;
+  string content = 4;
+  bool isRead = 5;
+  string createdAt = 6;
+
+  int32 assignmentId = 7;
+  int32 appealId = 8;
+  int32 conflictId = 9;
+  int32 roundId = 10;
+}
+
+message MessageList {
+  repeated ChatMessage messages = 1;
+}
+
+message ConversationPreview {
+  int32 otherUserId = 1;
+  string otherUserName = 2;
+  string otherUserRole = 3;
+  string lastMessage = 4;
+  string lastMessageAt = 5;
+  int32 unreadCount = 6;
+}
+
+message ConversationPreviewList {
+  repeated ConversationPreview conversations = 1;
+}
+
+message UnreadCountResponse {
+  int32 count = 1;
+}

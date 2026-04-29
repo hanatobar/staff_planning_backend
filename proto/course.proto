@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package course;
+
+service CourseService {
+  rpc AddCourse (AddCourseRequest) returns (MessageResponse);
+  rpc GetAllCourses (Empty) returns (CourseList);
+  rpc DeleteCourse (CourseId) returns (MessageResponse);
+  rpc UpdateCourse (UpdateCourseRequest) returns (MessageResponse);
+}
+
+message AddCourseRequest {
+  string name = 1;
+  string code = 2;
+  int32 hours = 3;
+  string semester = 4;
+}
+
+message UpdateCourseRequest {
+  int32 id = 1;
+  string name = 2;
+  string code = 3;
+  int32 hours = 4;
+  string semester = 5;
+}
+
+
+message Course {
+  int32 id = 1;
+  string name = 2;
+  string code = 3;
+  int32 hours = 4;
+  string semester = 5;
+}
+
+message CourseList {
+  repeated Course courses = 1;
+}
+
+message CourseId {
+  int32 id = 1;
+}
+
+message Empty {}
+
+message MessageResponse {
+  string message = 1;
+}
