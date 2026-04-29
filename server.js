@@ -1,7 +1,6 @@
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 require('dotenv').config();
-const express = require("express");
 
 
 const staffController = require('./controllers/staffController');
@@ -157,6 +156,11 @@ server.bindAsync(
   }
 );
 
+
+
+}
+const express = require("express");
+
 const app = express();
 
 app.use(express.json());
@@ -167,12 +171,10 @@ app.get("/", (req, res) => {
 });
 
 // Use Render port
-const HTTP_PORT = process.env.PORT || 3000;
+const HTTP_PORT = process.env.PORT ;
 
 app.listen(HTTP_PORT, () => {
   console.log(`HTTP server running on port ${HTTP_PORT}`);
 });
-
-}
 
 main();
