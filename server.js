@@ -2,6 +2,8 @@ const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 require('dotenv').config();
 const authService = require("./services/authService");
+const path = require('path');
+
 
 
 
@@ -17,19 +19,37 @@ const notificationService = require("./services/notificationService");
 const { getNotificationsByUser } = require('./repositories/notificationRepository');
 const messageController = require("./controllers/messageController");
 
-const staffPackageDefinition = protoLoader.loadSync('./proto/staff.proto');
-const coursePackageDefinition = protoLoader.loadSync('./proto/course.proto');
-const preferencePackageDefinition = protoLoader.loadSync('./proto/preference.proto');
-const courseRequirementPackageDefinition = protoLoader.loadSync('./proto/course_requirement.proto');
-const assignmentPackageDefinition = protoLoader.loadSync('./proto/assignment.proto');
-const preferenceRoundPackageDefinition = protoLoader.loadSync('./proto/preference_round.proto');
-const notificationPackageDefinition = protoLoader.loadSync('./proto/notification.proto');
-const messagePackageDefinition = protoLoader.loadSync('./proto/message.proto');
-const authPackageDefinition = protoLoader.loadSync('./proto/auth.proto');
+const staffPackageDefinition =protoLoader.loadSync(
+  path.join(__dirname, 'proto', 'staff.proto')
+);
+const coursePackageDefinition = protoLoader.loadSync(
+  path.join(__dirname, 'proto', 'course.proto')
+);
+const preferencePackageDefinition = protoLoader.loadSync(
+  path.join(__dirname, 'proto', 'preference.proto')
+);
+const courseRequirementPackageDefinition = protoLoader.loadSync(
+  path.join(__dirname, 'proto', 'course_requirement.proto')
+);
+const assignmentPackageDefinition = protoLoader.loadSync(
+  path.join(__dirname, 'proto', 'assignment.proto')
+);
+const preferenceRoundPackageDefinition = protoLoader.loadSync(
+  path.join(__dirname, 'proto', 'preference_round.proto')
+);
+const notificationPackageDefinition = protoLoader.loadSync(
+  path.join(__dirname, 'proto', 'notification.proto')
+);
+const messagePackageDefinition = protoLoader.loadSync(
+  path.join(__dirname, 'proto', 'message.proto')
+);
+const authPackageDefinition = protoLoader.loadSync(
+  path.join(__dirname, 'proto', 'auth.proto')
+);
 
 
 
-const staffProto = grpc.loadPackageDefinition(staffPackageDefinition);
+const staffProto = grpc.loadPackageDefinition(staffPackageDefinition).staff;
 const courseProto = grpc.loadPackageDefinition(coursePackageDefinition).course;
 const preferenceProto = grpc.loadPackageDefinition(preferencePackageDefinition).preference;
 const courseRequirementProto = grpc.loadPackageDefinition(courseRequirementPackageDefinition).course_requirement;
@@ -155,6 +175,7 @@ server.bindAsync(
     }
 
     console.log(`gRPC server running on ${ADDRESS}`);
+    server.start();
   }
 );
 
