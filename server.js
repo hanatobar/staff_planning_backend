@@ -1,6 +1,8 @@
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 require('dotenv').config();
+const authService = require("./services/authService");
+
 
 
 const staffController = require('./controllers/staffController');
@@ -174,8 +176,7 @@ app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const result = await authController.loginHttp(email, password);
-
+const result = await authService.login(email, password);
     res.json(result);
   } catch (err) {
     console.error(err);
