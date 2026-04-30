@@ -191,11 +191,7 @@ app.post("/auth/set-initial-password", async (req, res) => {
   res.json(result);
 });
 
-const HTTP_PORT = process.env.PORT || 3000;
 
-app.listen(HTTP_PORT, "0.0.0.0", () => {
-  console.log(`HTTP server running on port ${HTTP_PORT}`);
-});
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
@@ -283,5 +279,11 @@ app.get("/preferences/staff/:staffId", preferenceHttpController.getPreferencesBy
 app.get("/preferences", preferenceHttpController.getAllPreferences);
 app.put("/preferences/:id", preferenceHttpController.updatePreference);
 app.post("/preferences/reset/:staffId", preferenceHttpController.resetPreferences);
+
+const HTTP_PORT = process.env.PORT || 3000;
+
+app.listen(HTTP_PORT, "0.0.0.0", () => {
+  console.log(`HTTP server running on port ${HTTP_PORT}`);
+});
 
 main();
