@@ -261,11 +261,11 @@ app.put("/courses/:id", courseHttpController.updateCourse);
 
 const staffHttpController = require("./controllers/staffHttpController");
 
-app.post("/staff", staffHttpController.addStaff);
-app.get("/staff", staffHttpController.getAllStaff);
-app.delete("/staff/:id", staffHttpController.deleteStaff);
-app.put("/staff/:id", staffHttpController.updateStaff);
-app.put("/staff/priority", staffHttpController.updateTaPriorityOrder);
+app.post("/staff", (req, res) => staffHttpController.addStaff(req, res));
+app.get("/staff", (req, res) => staffHttpController.getAllStaff(req, res));
+app.delete("/staff/:id", (req, res) => staffHttpController.deleteStaff(req, res));
+app.put("/staff/:id", (req, res) => staffHttpController.updateStaff(req, res));
+app.put("/staff/priority", (req, res) => staffHttpController.updateTaPriorityOrder(req, res));
 
 const messageHttpController = require("./controllers/messageHttpController");
 
