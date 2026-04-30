@@ -183,6 +183,14 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.post("/auth/set-initial-password", async (req, res) => {
+  const { email, password } = req.body;
+
+  const result = await authService.setInitialPassword(email, password);
+
+  res.json(result);
+});
+
 const HTTP_PORT = process.env.PORT || 3000;
 
 app.listen(HTTP_PORT, "0.0.0.0", () => {
@@ -197,4 +205,83 @@ process.on("unhandledRejection", (err) => {
   console.error("Unhandled Rejection:", err);
 });
 
-//main();
+const assignmentHttpController = require("./controllers/assignmentHttpController");
+
+app.post("/assignments/generate", assignmentHttpController.generatePlan);
+app.get("/assignments", assignmentHttpController.getAssignments);
+app.get("/assignments/staff/:id", assignmentHttpController.getAssignmentsByStaff);
+app.post("/assignments/approve", assignmentHttpController.approvePlan);
+
+app.get("/assignments/analytics", assignmentHttpController.getAnalytics);
+app.get("/assignments/conflicts", assignmentHttpController.getConflicts);
+app.get("/assignments/non-submitters", assignmentHttpController.getNonSubmitters);
+app.get("/assignments/uncovered-hours", assignmentHttpController.getUncoveredHours);
+
+app.post("/assignments/uncovered-hours/assign", assignmentHttpController.assignUncoveredHours);
+app.post("/assignments/transfer", assignmentHttpController.transferAssignmentHours);
+
+app.post("/assignments/appeals", assignmentHttpController.submitAppeal);
+app.get("/assignments/appeals/staff/:id", assignmentHttpController.getAppealsByStaff);
+app.get("/assignments/appeals", assignmentHttpController.getAllAppeals);
+
+app.get("/assignments/appeals/:id", assignmentHttpController.getAppealDetails);
+app.post("/assignments/appeals/review", assignmentHttpController.reviewAppeal);
+app.post("/assignments/appeals/resolve", assignmentHttpController.resolveAppeal);
+
+const courseRequirementHttpController = require("./controllers/courseRequirementHttpController");
+
+app.post("/course-requirements", courseRequirementHttpController.addRequirement);
+app.put("/course-requirements/:id", courseRequirementHttpController.updateRequirement);
+app.get("/course-requirements", courseRequirementHttpController.getAllRequirements);
+
+const courseHttpController = require("./controllers/courseHttpController");
+
+app.post("/courses", courseHttpController.addCourse);
+app.get("/courses", courseHttpController.getAllCourses);
+app.delete("/courses/:id", courseHttpController.deleteCourse);
+app.put("/courses/:id", courseHttpController.updateCourse);
+
+const staffHttpController = require("./controllers/staffHttpController");
+
+app.post("/staff", staffHttpController.addStaff);
+app.get("/staff", staffHttpController.getAllStaff);
+app.delete("/staff/:id", staffHttpController.deleteStaff);
+app.put("/staff/:id", staffHttpController.updateStaff);
+app.put("/staff/priority", staffHttpController.updateTaPriorityOrder);
+
+const messageHttpController = require("./controllers/messageHttpController");
+
+app.post("/messages", messageHttpController.sendMessage);
+app.get("/messages/conversation", messageHttpController.getConversation);
+app.get("/messages/inbox/:userId", messageHttpController.getInbox);
+app.post("/messages/read", messageHttpController.markConversationAsRead);
+app.get("/messages/unread/:userId", messageHttpController.getUnreadCount);
+
+const notificationHttpController = require("./controllers/notificationHttpController");
+
+app.get("/notifications/:userId", notificationHttpController.getNotificationsByUser);
+app.get("/notifications/unread/:userId", notificationHttpController.getUnreadCount);
+
+app.post("/notifications/read/:id", notificationHttpController.markNotificationAsRead);
+app.post("/notifications/read-all/:userId", notificationHttpController.markAllNotificationsAsRead);
+
+app.post("/notifications/send/all", notificationHttpController.sendToAllTAs);
+app.post("/notifications/send/one", notificationHttpController.sendToOneUser);
+app.post("/notifications/send/multiple", notificationHttpController.sendToSelectedUsers);
+
+const preferenceRoundHttpController = require("./controllers/preferenceRoundHttpController");
+
+app.post("/rounds/open", preferenceRoundHttpController.openRound);
+app.post("/rounds/lock", preferenceRoundHttpController.lockRound);
+app.get("/rounds/current", preferenceRoundHttpController.getCurrentRound);
+app.get("/rounds/submission/:roundId", preferenceRoundHttpController.getSubmissionStatus);
+
+const preferenceHttpController = require("./controllers/preferenceHttpController");
+
+app.post("/preferences", preferenceHttpController.addPreference);
+app.get("/preferences/staff/:staffId", preferenceHttpController.getPreferencesByStaff);
+app.get("/preferences", preferenceHttpController.getAllPreferences);
+app.put("/preferences/:id", preferenceHttpController.updatePreference);
+app.post("/preferences/reset/:staffId", preferenceHttpController.resetPreferences);
+
+main();
