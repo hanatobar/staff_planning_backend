@@ -201,7 +201,7 @@ const result = await authService.login(email, password);
     res.json(result);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Login failed" });
+    res.status(401).json({ message: err.message });
   }
 });
 
