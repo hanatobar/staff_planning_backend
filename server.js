@@ -49,7 +49,7 @@ const authPackageDefinition = protoLoader.loadSync(
 
 
 
-const staffProto = grpc.loadPackageDefinition(staffPackageDefinition).staff;
+const staffProto = grpc.loadPackageDefinition(staffPackageDefinition);
 const courseProto = grpc.loadPackageDefinition(coursePackageDefinition).course;
 const preferenceProto = grpc.loadPackageDefinition(preferencePackageDefinition).preference;
 const courseRequirementProto = grpc.loadPackageDefinition(courseRequirementPackageDefinition).course_requirement;
