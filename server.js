@@ -225,39 +225,49 @@ process.on("unhandledRejection", (err) => {
 
 const assignmentHttpController = require("./controllers/assignmentHttpController");
 
-app.post("/assignments/generate", assignmentHttpController.generatePlan);
-app.get("/assignments", assignmentHttpController.getAssignments);
-app.get("/assignments/staff/:id", assignmentHttpController.getAssignmentsByStaff);
-app.post("/assignments/approve", assignmentHttpController.approvePlan);
+app.post("/assignments/generate", (req, res) =>
+  assignmentHttpController.generatePlan(req, res)
+);
+app.get("/assignments", (req, res) =>
+  assignmentHttpController.getAssignments(req, res)
+);
+app.get("/assignments/staff/:id", (req, res) => assignmentHttpController.getAssignmentsByStaff(req, res));
+app.post("/assignments/approve", (req, res) => assignmentHttpController.approvePlan(req, res));
 
-app.get("/assignments/analytics", assignmentHttpController.getAnalytics);
-app.get("/assignments/conflicts", assignmentHttpController.getConflicts);
-app.get("/assignments/non-submitters", assignmentHttpController.getNonSubmitters);
-app.get("/assignments/uncovered-hours", assignmentHttpController.getUncoveredHours);
+app.get("/assignments/analytics", (req, res) => assignmentHttpController.getAnalytics(req, res));
+app.get("/assignments/conflicts", (req, res) => assignmentHttpController.getConflicts(req, res));
+app.get("/assignments/non-submitters", (req, res) => assignmentHttpController.getNonSubmitters(req, res));
+app.get("/assignments/uncovered-hours", (req, res) => assignmentHttpController.getUncoveredHours(req, res));
 
-app.post("/assignments/uncovered-hours/assign", assignmentHttpController.assignUncoveredHours);
-app.post("/assignments/transfer", assignmentHttpController.transferAssignmentHours);
+app.post("/assignments/uncovered-hours/assign", (req, res) => assignmentHttpController.assignUncoveredHours(req, res));
+app.post("/assignments/transfer", (req, res) => assignmentHttpController.transferAssignmentHours(req, res));
 
-app.post("/assignments/appeals", assignmentHttpController.submitAppeal);
-app.get("/assignments/appeals/staff/:id", assignmentHttpController.getAppealsByStaff);
-app.get("/assignments/appeals", assignmentHttpController.getAllAppeals);
+app.post("/assignments/appeals", (req, res) => assignmentHttpController.submitAppeal(req, res));
+app.get("/assignments/appeals/staff/:id", (req, res) => assignmentHttpController.getAppealsByStaff(req, res));
+app.get("/assignments/appeals", (req, res) => assignmentHttpController.getAllAppeals(req, res));
 
-app.get("/assignments/appeals/:id", assignmentHttpController.getAppealDetails);
-app.post("/assignments/appeals/review", assignmentHttpController.reviewAppeal);
-app.post("/assignments/appeals/resolve", assignmentHttpController.resolveAppeal);
+app.get("/assignments/appeals/:id", (req, res) => assignmentHttpController.getAppealDetails(req, res));
+app.post("/assignments/appeals/review", (req, res) => assignmentHttpController.reviewAppeal(req, res));
+app.post("/assignments/appeals/resolve", (req, res) => assignmentHttpController.resolveAppeal(req, res));
 
 const courseRequirementHttpController = require("./controllers/courseRequirementHttpController");
 
-app.post("/course-requirements", courseRequirementHttpController.addRequirement);
-app.put("/course-requirements/:id", courseRequirementHttpController.updateRequirement);
-app.get("/course-requirements", courseRequirementHttpController.getAllRequirements);
+app.post("/course-requirements", (req, res) =>
+  courseRequirementHttpController.addRequirement(req, res)
+);
+app.put("/course-requirements/:id", (req, res) =>
+  courseRequirementHttpController.updateRequirement(req, res)
+);
+app.get("/course-requirements", (req, res) =>
+  courseRequirementHttpController.getAllRequirements(req, res)
+);
 
 const courseHttpController = require("./controllers/courseHttpController");
 
-app.post("/courses", courseHttpController.addCourse);
-app.get("/courses", courseHttpController.getAllCourses);
-app.delete("/courses/:id", courseHttpController.deleteCourse);
-app.put("/courses/:id", courseHttpController.updateCourse);
+app.post("/courses", (req, res) => courseHttpController.addCourse(req, res));
+app.get("/courses", (req, res) => courseHttpController.getAllCourses(req, res));
+app.delete("/courses/:id", (req, res) => courseHttpController.deleteCourse(req, res));
+app.put("/courses/:id", (req, res) => courseHttpController.updateCourse(req, res));
 
 const staffHttpController = require("./controllers/staffHttpController");
 
@@ -269,38 +279,78 @@ app.put("/staff/priority", (req, res) => staffHttpController.updateTaPriorityOrd
 
 const messageHttpController = require("./controllers/messageHttpController");
 
-app.post("/messages", messageHttpController.sendMessage);
-app.get("/messages/conversation", messageHttpController.getConversation);
-app.get("/messages/inbox/:userId", messageHttpController.getInbox);
-app.post("/messages/read", messageHttpController.markConversationAsRead);
-app.get("/messages/unread/:userId", messageHttpController.getUnreadCount);
+app.post("/messages", (req, res) =>
+  messageHttpController.sendMessage(req, res)
+);
+app.get("/messages/conversation", (req, res) =>
+  messageHttpController.getConversation(req, res)
+);
+app.get("/messages/inbox/:userId", (req, res) =>
+  messageHttpController.getInbox(req, res)
+);
+app.post("/messages/read", (req, res) =>
+  messageHttpController.markConversationAsRead(req, res)
+);
+app.get("/messages/unread/:userId", (req, res) =>
+  messageHttpController.getUnreadCount(req, res)
+);
 
 const notificationHttpController = require("./controllers/notificationHttpController");
 
-app.get("/notifications/:userId", notificationHttpController.getNotificationsByUser);
-app.get("/notifications/unread/:userId", notificationHttpController.getUnreadCount);
-
-app.post("/notifications/read/:id", notificationHttpController.markNotificationAsRead);
-app.post("/notifications/read-all/:userId", notificationHttpController.markAllNotificationsAsRead);
-
-app.post("/notifications/send/all", notificationHttpController.sendToAllTAs);
-app.post("/notifications/send/one", notificationHttpController.sendToOneUser);
-app.post("/notifications/send/multiple", notificationHttpController.sendToSelectedUsers);
+app.get("/notifications/:userId", (req, res) =>
+  notificationHttpController.getNotificationsByUser(req, res)
+);
+app.get("/notifications/unread/:userId", (req, res) =>
+  notificationHttpController.getUnreadCount(req, res)
+);
+app.post("/notifications/read/:id", (req, res) =>
+  notificationHttpController.markNotificationAsRead(req, res)
+);
+app.post("/notifications/read-all/:userId", (req, res) =>
+  notificationHttpController.markAllNotificationsAsRead(req, res)
+);
+app.post("/notifications/send/all", (req, res) =>
+  notificationHttpController.sendToAllTAs(req, res)
+);
+app.post("/notifications/send/one", (req, res) =>
+  notificationHttpController.sendToOneUser(req, res)
+);
+app.post("/notifications/send/multiple", (req, res) =>
+  notificationHttpController.sendToSelectedUsers(req, res)
+);
 
 const preferenceRoundHttpController = require("./controllers/preferenceRoundHttpController");
 
-app.post("/rounds/open", preferenceRoundHttpController.openRound);
-app.post("/rounds/lock", preferenceRoundHttpController.lockRound);
-app.get("/rounds/current", preferenceRoundHttpController.getCurrentRound);
-app.get("/rounds/submission/:roundId", preferenceRoundHttpController.getSubmissionStatus);
+app.post("/rounds/open", (req, res) =>
+  preferenceRoundHttpController.openRound(req, res)
+);
+app.post("/rounds/lock", (req, res) =>
+  preferenceRoundHttpController.lockRound(req, res)
+);
+app.get("/rounds/current", (req, res) =>
+  preferenceRoundHttpController.getCurrentRound(req, res)
+);
+app.get("/rounds/submission/:roundId", (req, res) =>
+  preferenceRoundHttpController.getSubmissionStatus(req, res)
+);
 
 const preferenceHttpController = require("./controllers/preferenceHttpController");
 
-app.post("/preferences", preferenceHttpController.addPreference);
-app.get("/preferences/staff/:staffId", preferenceHttpController.getPreferencesByStaff);
-app.get("/preferences", preferenceHttpController.getAllPreferences);
-app.put("/preferences/:id", preferenceHttpController.updatePreference);
-app.post("/preferences/reset/:staffId", preferenceHttpController.resetPreferences);
+app.post("/preferences", (req, res) =>
+  preferenceHttpController.addPreference(req, res)
+);
+app.get("/preferences/staff/:staffId", (req, res) =>
+  preferenceHttpController.getPreferencesByStaff(req, res)
+);
+app.get("/preferences", (req, res) =>
+  preferenceHttpController.getAllPreferences(req, res)
+);
+app.put("/preferences/:id", (req, res) =>
+  preferenceHttpController.updatePreference(req, res)
+);
+app.post("/preferences/reset/:staffId", (req, res) =>
+  preferenceHttpController.resetPreferences(req, res)
+);
 
 const HTTP_PORT = process.env.PORT || 3000;
 
