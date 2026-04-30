@@ -73,5 +73,44 @@ class AssignmentHttpController {
     }
   }
 
+  async getConflicts(req, res) {
+  try {
+    const data = await service.getConflicts();
+
+    res.json({ conflicts: data });
+
+  } catch (err) {
+    console.error("GET CONFLICTS ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+}
+async getAllAppeals(req, res) {
+  try {
+    const data = await service.getAllAppeals();
+    res.json({ appeals: data });
+  } catch (err) {
+    console.error("GET APPEALS ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+}
+async getUncoveredHours(req, res) {
+  try {
+    const data = await service.getUncoveredHours();
+    res.json({ uncovered: data });
+  } catch (err) {
+    console.error("GET UNCOVERED ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async getNonSubmitters(req, res) {
+  try {
+    const data = await service.getNonSubmitters();
+    res.json({ nonSubmitters: data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 }
 module.exports = new AssignmentHttpController();
