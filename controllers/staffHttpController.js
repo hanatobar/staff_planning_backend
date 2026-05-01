@@ -31,6 +31,7 @@ class StaffHttpController {
         email: s.email,
         role: s.role,
         maxWorkload: s.max_workload,
+        userId: s.user_id,
         priorityRank: s.priority_rank
       }));
 

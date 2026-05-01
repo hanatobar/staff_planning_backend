@@ -81,7 +81,8 @@ async getCurrentRound(req, res) {
         staffId: t.staff_id,
         staffName: t.staff_name,
         status: t.status,
-        isValid: t.is_valid
+        isValid: t.is_valid,
+        submittedAt: t.submitted_at
       }));
 
       res.json(formatted);
