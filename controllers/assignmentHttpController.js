@@ -103,6 +103,25 @@ async getUncoveredHours(req, res) {
   }
 }
 
+async submitAppeal(req, res) {
+  try {
+    const { assignmentId, staffId, appealedHours, reason } = req.body;
+
+    const result = await service.submitAppeal(
+      assignmentId,
+      staffId,
+      appealedHours,
+      reason
+    );
+
+    res.json(result);
+
+  } catch (err) {
+    console.error("SUBMIT APPEAL ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
 async getNonSubmitters(req, res) {
   try {
     const data = await service.getNonSubmitters();

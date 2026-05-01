@@ -245,6 +245,9 @@ app.post("/assignments/transfer", (req, res) => assignmentHttpController.transfe
 app.post("/assignments/appeals", (req, res) => assignmentHttpController.submitAppeal(req, res));
 app.get("/assignments/appeals/staff/:id", (req, res) => assignmentHttpController.getAppealsByStaff(req, res));
 app.get("/assignments/appeals", (req, res) => assignmentHttpController.getAllAppeals(req, res));
+app.post("/assignments/appeals", (req, res) => 
+  assignmentHttpController.submitAppeal(req, res)
+);
 
 app.get("/assignments/appeals/:id", (req, res) => assignmentHttpController.getAppealDetails(req, res));
 app.post("/assignments/appeals/review", (req, res) => assignmentHttpController.reviewAppeal(req, res));
