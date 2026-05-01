@@ -16,7 +16,7 @@ class AssignmentHttpController {
         courseName: a.course_name
       }));
 
-      res.json({ assignments: formatted });
+      res.json(formatted);
 
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -39,7 +39,7 @@ class AssignmentHttpController {
         courseName: a.course_name
       }));
 
-      res.json({ assignments: formatted });
+      res.json(formatted);
 
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -77,7 +77,7 @@ class AssignmentHttpController {
   try {
     const data = await service.getConflicts();
 
-    res.json({ conflicts: data });
+    res.json(data);
 
   } catch (err) {
     console.error("GET CONFLICTS ERROR:", err);
@@ -87,7 +87,7 @@ class AssignmentHttpController {
 async getAllAppeals(req, res) {
   try {
     const data = await service.getAllAppeals();
-    res.json({ appeals: data });
+    res.json(data);
   } catch (err) {
     console.error("GET APPEALS ERROR:", err);
     res.status(500).json({ error: err.message });
@@ -96,7 +96,7 @@ async getAllAppeals(req, res) {
 async getUncoveredHours(req, res) {
   try {
     const data = await service.getUncoveredHours();
-    res.json({ uncovered: data });
+    res.json(data);
   } catch (err) {
     console.error("GET UNCOVERED ERROR:", err);
     res.status(500).json({ error: err.message });
@@ -106,7 +106,7 @@ async getUncoveredHours(req, res) {
 async getNonSubmitters(req, res) {
   try {
     const data = await service.getNonSubmitters();
-    res.json({ nonSubmitters: data });
+    res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

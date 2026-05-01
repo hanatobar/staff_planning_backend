@@ -49,7 +49,7 @@ class MessageHttpController {
         isRead: m.is_read
       }));
 
-      res.json({ messages: formatted });
+      res.json(formatted);
 
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -70,7 +70,7 @@ class MessageHttpController {
         unreadCount: c.unread_count
       }));
 
-      res.json({ conversations: formatted });
+      res.json(formatted);
 
     } catch (err) {
       res.status(500).json({ error: err.message });
