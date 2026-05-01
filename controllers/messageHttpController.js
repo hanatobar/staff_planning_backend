@@ -65,8 +65,9 @@ class MessageHttpController {
       const formatted = data.map(c => ({
         otherUserId: c.other_user_id,
         otherUserName: c.other_user_name,
+        otherUserRole: c.other_user_role,
         lastMessage: c.last_message,
-        lastMessageTime: c.last_message_time,
+        lastMessageTime: c.last_message_at,
         unreadCount: c.unread_count
       }));
 

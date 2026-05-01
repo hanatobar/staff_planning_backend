@@ -259,7 +259,8 @@ async getNonSubmittersByRound(roundId) {
     SELECT
       s.id AS staff_id,
       s.name AS staff_name,
-      s.email AS staff_email
+      s.email AS staff_email,
+      s.user_id
     FROM preference_submission_status pss
     JOIN staff s ON s.id = pss.staff_id
     WHERE pss.round_id = $1
