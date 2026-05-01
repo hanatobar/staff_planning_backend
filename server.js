@@ -205,6 +205,16 @@ const result = await authService.login(email, password);
   }
 });
 
+app.get("/auth/coordinator", async (req, res) => {
+  try {
+    const result = await authService.getCoordinatorUser();
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 app.post("/auth/set-initial-password", async (req, res) => {
   const { email, password } = req.body;
 
@@ -245,9 +255,7 @@ app.post("/assignments/transfer", (req, res) => assignmentHttpController.transfe
 app.post("/assignments/appeals", (req, res) => assignmentHttpController.submitAppeal(req, res));
 app.get("/assignments/appeals/staff/:id", (req, res) => assignmentHttpController.getAppealsByStaff(req, res));
 app.get("/assignments/appeals", (req, res) => assignmentHttpController.getAllAppeals(req, res));
-app.post("/assignments/appeals", (req, res) => 
-  assignmentHttpController.submitAppeal(req, res)
-);
+
 
 app.get("/assignments/appeals/:id", (req, res) => assignmentHttpController.getAppealDetails(req, res));
 app.post("/assignments/appeals/review", (req, res) => assignmentHttpController.reviewAppeal(req, res));
