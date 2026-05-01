@@ -100,9 +100,36 @@ async getAppealsByStaff(req, res) {
 
     const data = await service.getAppealsByStaff(staffId);
 
-    res.json(data || []); // ✅ always return array
+const formatted = data.map(a => ({
+  id: a.id,
+  staffId: a.staff_id,
+  staffName: a.staff_name,
+  courseName: a.course_name,
+  appealedHours: a.appealed_hours,
+  reason: a.reason,
+  status: a.status,
+  coordinatorResponse: a.coordinator_response || ""
+}));
+
+res.json(formatted);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+async getAppealDetails(req, res) {
+  try {
+    const id = Number(req.params.id);
+
+    const data = await service.getAppealDetails(id);
+
+    res.json({
+      redistributions: data.redistributions || [],
+      compensations: data.compensations || []
+    });
 
   } catch (err) {
+    console.error("DETAILS ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 }
@@ -137,28 +164,45 @@ async submitAppeal(req, res) {
 
 async reviewAppeal(req, res) {
   try {
-    const { appealId, response } = req.body;
+    const { appealId, status, coordinatorResponse, reviewedByUserId } = req.body;
 
-    const result = await service.reviewAppeal(appealId, response);
+    const result = await service.reviewAppeal(
+      Number(appealId),
+      String(status).toUpperCase(), // 🔥 IMPORTANT
+      coordinatorResponse,
+      Number(reviewedByUserId)
+    );
 
-    res.json(result); // ✅ MUST return JSON
+    res.json(result);
 
   } catch (err) {
-    console.error("REVIEW ERROR:", err);
+    console.error("REVIEW APPEAL ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 }
 
 async resolveAppeal(req, res) {
   try {
-    const { appealId, status } = req.body;
+    const {
+      appealId,
+      reviewedByUserId,
+      coordinatorResponse,
+      redistributions,
+      compensations
+    } = req.body;
 
-    const result = await service.resolveAppeal(appealId, status);
+    const result = await service.resolveAppeal(
+      Number(appealId),
+      Number(reviewedByUserId),
+      coordinatorResponse,
+      redistributions,
+      compensations
+    );
 
-    res.json(result); // ✅ MUST return JSON
+    res.json(result);
 
   } catch (err) {
-    console.error("RESOLVE ERROR:", err);
+    console.error("RESOLVE APPEAL ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 }
