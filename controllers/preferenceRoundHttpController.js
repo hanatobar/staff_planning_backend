@@ -40,25 +40,36 @@ class PreferenceRoundHttpController {
     }
   }
 
-  async getCurrentRound(req, res) {
-    try {
-      const data = await service.getCurrentRound();
+async getCurrentRound(req, res) {
+  try {
+    const data = await service.getCurrentRound();
 
-      const formatted = {
-        id: data.id,
-        startAt: data.start_at,
-        endAt: data.end_at,
-        isLocked: data.is_locked,
-        semester: data.semester,
-        conflictResolutionMode: data.conflict_resolution_mode
-      };
-
-      res.json(formatted);
-
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+    if (!data) {
+      return res.json({
+        id: 0,
+        startAt: "",
+        endAt: "",
+        isLocked: false,
+        semester: "",
+        conflictResolutionMode: ""
+      });
     }
+
+    const formatted = {
+      id: data.id ?? 0,
+      startAt: data.start_at ?? "",
+      endAt: data.end_at ?? "",
+      isLocked: data.is_locked ?? false,
+      semester: data.semester ?? "",
+      conflictResolutionMode: data.conflict_resolution_mode ?? ""
+    };
+
+    res.json(formatted);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
+}
 
   async getSubmissionStatus(req, res) {
     try {
@@ -73,7 +84,7 @@ class PreferenceRoundHttpController {
         isValid: t.is_valid
       }));
 
-      res.json({ tracking: formatted });
+      res.json(formatted);
 
     } catch (err) {
       res.status(500).json({ error: err.message });
