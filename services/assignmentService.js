@@ -765,7 +765,6 @@ if (coordinatorRes.rows.length > 0) {
 }
 
 async sendApprovalEmails(assignments) {
-
   const assignmentsByStaff = {};
   const coordinator = await this.getCoordinatorUser();
 
@@ -775,7 +774,6 @@ async sendApprovalEmails(assignments) {
     if (!assignmentsByStaff[a.staff_id]) {
       assignmentsByStaff[a.staff_id] = {
         name: a.staff_name,
-        email: null,
         items: []
       };
     }
@@ -786,18 +784,23 @@ async sendApprovalEmails(assignments) {
     });
   }
 
-  // send email per TA
-  for (const staffId of Object.keys(assignmentsByStaff)) {
+  const staffIds = Object.keys(assignmentsByStaff);
 
-    const res = await db.query(
-      "SELECT email, user_id FROM staff WHERE id = $1",
-      [staffId]
-    );
+  if (staffIds.length === 0) return;
 
-    if (res.rows.length === 0) continue;
+  const staffRes = await db.query(
+    "SELECT id, email, user_id FROM staff WHERE id = ANY($1::int[])",
+    [staffIds.map(Number)]
+  );
 
-    const email = res.rows[0].email;
-    const userId = res.rows[0].user_id;
+  const staffById = new Map(staffRes.rows.map((row) => [Number(row.id), row]));
+
+  const results = await Promise.allSettled(staffIds.map(async (staffId) => {
+    const staff = staffById.get(Number(staffId));
+    if (!staff || !staff.email) return;
+
+    const email = staff.email;
+    const userId = staff.user_id;
     const staffData = assignmentsByStaff[staffId];
 
     const assignmentList = staffData.items
@@ -824,16 +827,23 @@ Staff Planning System`;
       "Final Teaching Assignments Approved",
       message
     );
+
     if(userId){
-    await notificationService.createSystemNotification(
-  Number(userId),
-  "Final Plan Approved",
-  "Your final assignments have been approved. Please check your teaching load in the system.",
-  "PLAN_APPROVED",
-  null,
-  null
-);
-  }}
+      await notificationService.createSystemNotification(
+        Number(userId),
+        "Final Plan Approved",
+        "Your final assignments have been approved. Please check your teaching load in the system.",
+        "PLAN_APPROVED",
+        null,
+        null
+      );
+    }
+  }));
+
+  const failed = results.filter((result) => result.status === "rejected");
+  if (failed.length > 0) {
+    console.error("APPROVAL EMAIL ERRORS:", failed.map((result) => result.reason));
+  }
 }
 
 async getAssignments() {
@@ -844,18 +854,29 @@ async getAssignments() {
 
 async approvePlan() {
   const round = await roundService.ensureGenerationAllowed();
-  const assignments = await repo.getAllAssignments(round.id);
+  const generatedAssignments = (await repo.getAllAssignments(round.id))
+    .filter((a) => a.status === "GENERATED");
 
-  for (const a of assignments) {
-    if (a.status === "GENERATED") {
-      await repo.updateAssignmentStatus(a.id, "APPROVED");
-    }
+  if (generatedAssignments.length === 0) {
+    return { message: "Plan is already approved" };
   }
 
-  const updatedAssignments = await repo.getAllAssignments(round.id);
-  await this.sendApprovalEmails(updatedAssignments);
+  await db.query(
+    `
+    UPDATE assignment
+    SET status = 'APPROVED'
+    WHERE round_id = $1
+      AND status = 'GENERATED'
+    `,
+    [round.id]
+  );
 
-  return { message: "Plan approved successfully" };
+  const updatedAssignments = await repo.getAllAssignments(round.id);
+  this.sendApprovalEmails(updatedAssignments).catch((err) => {
+    console.error("APPROVAL EMAIL BACKGROUND ERROR:", err);
+  });
+
+  return { message: "Plan approved successfully. Emails are being sent." };
 }
 
 async getAssignmentsByStaff(staffId) {
