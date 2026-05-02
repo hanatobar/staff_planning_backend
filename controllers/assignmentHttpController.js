@@ -123,9 +123,22 @@ async getAppealDetails(req, res) {
 
     const data = await service.getAppealDetails(id);
 
+    const redistributions = (data.redistributions || []).map(r => ({
+      targetStaffId: r.target_staff_id,
+      targetStaffName: r.target_staff_name, // ✅ FIXED
+      hours: r.hours
+    }));
+
+    const compensations = (data.compensations || []).map(c => ({
+      sourceType: c.source_type,
+      courseName: c.course_name,           // ✅ FIXED
+      sourceStaffName: c.source_staff_name, // ✅ FIXED
+      hours: c.hours
+    }));
+
     res.json({
-      redistributions: data.redistributions || [],
-      compensations: data.compensations || []
+      redistributions,
+      compensations
     });
 
   } catch (err) {
