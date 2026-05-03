@@ -107,23 +107,27 @@ async updateTaPriorityOrder(client, staffIds) {
   console.log("REPO IDS:", staffIds);
 
   for (let i = 0; i < staffIds.length; i++) {
-    const id = Number(staffIds[i]);
+    const rawId = staffIds[i];
+
+    // 🔥 STRICT VALIDATION
+    if (rawId === null || rawId === undefined) {
+      throw new Error(`ID is null/undefined at index ${i}`);
+    }
+
+    const id = parseInt(rawId);
 
     if (!Number.isInteger(id)) {
-      throw new Error(`Invalid ID in repo: ${staffIds[i]}`);
+      throw new Error(`Invalid ID at index ${i}: ${rawId}`);
     }
 
-    const result = await client.query(
+    console.log(`Updating ID ${id} -> priority ${i + 1}`);
+
+    await client.query(
       `UPDATE staff
        SET priority_rank = $1
-       WHERE id = $2
-       RETURNING id`,
+       WHERE id = $2`,
       [i + 1, id]
     );
-
-    if (result.rowCount === 0) {
-      throw new Error(`No TA found with id ${id}`);
-    }
   }
 }
 }

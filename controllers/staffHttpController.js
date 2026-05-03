@@ -84,14 +84,19 @@ async updateTaPriorityOrder(req, res) {
       throw new Error("staffIds must be an array");
     }
 
-    // STRICT cleaning
-    const cleanIds = staffIds.map(id => {
-      const parsed = Number(id);
-      if (!Number.isInteger(parsed)) {
-        throw new Error(`Invalid ID detected: ${id}`);
-      }
-      return parsed;
-    });
+const cleanIds = staffIds.map((id, index) => {
+  if (id === null || id === undefined) {
+    throw new Error(`Invalid ID at index ${index}`);
+  }
+
+  const parsed = parseInt(id);
+
+  if (!Number.isInteger(parsed)) {
+    throw new Error(`Invalid ID detected: ${id}`);
+  }
+
+  return parsed;
+});
 
     console.log("FINAL IDS:", cleanIds);
 
