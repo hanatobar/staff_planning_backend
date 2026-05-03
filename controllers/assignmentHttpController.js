@@ -73,11 +73,23 @@ class AssignmentHttpController {
     }
   }
 
-  async getConflicts(req, res) {
+async getConflicts(req, res) {
   try {
     const data = await service.getConflicts();
 
-    res.json(data);
+    const formatted = data.map(c => ({
+      id: c.id,
+      courseId: c.course_id,
+      courseName: c.course_name,
+      status: c.status,
+      preferenceLevel: c.preference_level,
+      involvedStaffNames: c.involved_staff_names,
+      chosenStaffName: c.chosen_staff_name || "",
+      chosenStaffId: c.chosen_staff_id || 0,
+      resolutionMethod: c.resolution_method,
+    }));
+
+    res.json({ conflicts: formatted });
 
   } catch (err) {
     console.error("GET CONFLICTS ERROR:", err);
