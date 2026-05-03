@@ -76,27 +76,33 @@ class StaffHttpController {
     }
   }
 
-  async updateTaPriorityOrder(req, res) {
-    try {
-let { staffIds } = req.body;
+async updateTaPriorityOrder(req, res) {
+  try {
+    let { staffIds } = req.body;
 
-console.log("RAW IDS:", staffIds);
-
-// 🔥 FORCE CLEAN ARRAY
-staffIds = staffIds
-  .map(id => parseInt(id))
-  .filter(id => !isNaN(id));
-
-console.log("CLEAN IDS:", staffIds);
-
-      const result = await service.updateTaPriorityOrder(staffIds);
-
-      res.json({ message: result.message });
-
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+    if (!Array.isArray(staffIds)) {
+      throw new Error("staffIds must be an array");
     }
+
+    // STRICT cleaning
+    const cleanIds = staffIds.map(id => {
+      const parsed = Number(id);
+      if (!Number.isInteger(parsed)) {
+        throw new Error(`Invalid ID detected: ${id}`);
+      }
+      return parsed;
+    });
+
+    console.log("FINAL IDS:", cleanIds);
+
+    const result = await service.updateTaPriorityOrder(cleanIds);
+
+    res.json({ message: result.message });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
+}
 
 }
 
