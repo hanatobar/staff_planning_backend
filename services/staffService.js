@@ -384,41 +384,23 @@ async function updateTaPriorityOrder(staffIds) {
     await client.query("BEGIN");
 
     if (!Array.isArray(staffIds) || staffIds.length === 0) {
-      throw new Error("TA priority order is required");
+      throw new Error("Invalid priority list");
     }
 
-    const result = await client.query(`
-      SELECT id
-      FROM staff
-      WHERE LOWER(role) = 'ta'
-      ORDER BY priority_rank ASC, id ASC
-    `);
+    for (let i = 0; i < staffIds.length; i++) {
+      const id = Number(staffIds[i]);
+      const priority = i + 1;
 
-    const existingTaIds = result.rows.map(r => Number(r.id));
-    const incomingIds = staffIds.map(id => Number(id));
-
-if (!Array.isArray(staffIds) || staffIds.length === 0) {
-  throw new Error("Invalid priority list");
-}
-
-    const existingSet = new Set(existingTaIds);
-    const incomingSet = new Set(incomingIds);
-
-    if (existingSet.size !== incomingSet.size) {
-      throw new Error("Invalid TA priority list");
+      await client.query(
+        `UPDATE staff SET priority_rank = $1 WHERE id = $2`,
+        [priority, id]
+      );
     }
-
-    for (const id of incomingIds) {
-      if (!existingSet.has(id)) {
-        throw new Error("Priority list contains invalid TA ids");
-      }
-    }
-
-    await staffRepository.updateTaPriorityOrder(client, incomingIds);
 
     await client.query("COMMIT");
 
     return { message: "TA priority order updated successfully" };
+
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
