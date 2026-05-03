@@ -30,15 +30,15 @@ class StaffRepository {
 
     return result.rows[0];
   }
+async getAllStaff() {
+  const result = await db.query(`
+    SELECT *
+    FROM staff
+    ORDER BY priority_rank ASC
+  `);
 
-  async getAllStaff() {
-    const result = await db.query(`
-      SELECT *
-      FROM staff
-    `);
-
-    return result.rows;
-  }
+  return result.rows;
+}
 
   async deleteStaff(id) {
     await db.query(`

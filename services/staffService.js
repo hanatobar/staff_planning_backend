@@ -382,20 +382,21 @@ async function updateTaPriorityOrder(staffIds) {
   const client = await db.pool.connect();
 
   try {
-    console.log("SERVICE RECEIVED IDS:", staffIds);
+    console.log("🔥 RECEIVED IDS:", staffIds);
 
     await client.query("BEGIN");
 
-    // call repository
     await staffRepository.updateTaPriorityOrder(client, staffIds);
 
     await client.query("COMMIT");
+
+    console.log("✅ PRIORITY SAVED");
 
     return { message: "Priority updated successfully" };
 
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error("PRIORITY UPDATE ERROR:", err);
+    console.error("❌ PRIORITY UPDATE ERROR:", err);
     throw new Error("Failed to update priority");
 
   } finally {
