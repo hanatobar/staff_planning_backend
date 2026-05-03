@@ -104,40 +104,26 @@ async getAllStaff() {
   }
 
 async updateTaPriorityOrder(client, staffIds) {
-  for (let i = 0; i < staffIds.length; i++) {
-    const id = parseInt(staffIds[i]);
-
-    if (isNaN(id)) {
-      throw new Error(`Invalid ID: ${staffIds[i]}`);
-    }
-
-    await client.query(
-      `
-      UPDATE staff
-      SET priority_rank = $1
-      WHERE id = $2
-        AND LOWER(role) = 'ta'
-      `,
-      [-(i + 1), id]
-    );
-  }
+  console.log("REPO IDS:", staffIds);
 
   for (let i = 0; i < staffIds.length; i++) {
-    const id = parseInt(staffIds[i]);
+    const id = Number(staffIds[i]);
 
-    if (isNaN(id)) {
-      throw new Error(`Invalid ID: ${staffIds[i]}`);
+    if (!Number.isInteger(id)) {
+      throw new Error(`Invalid ID in repo: ${staffIds[i]}`);
     }
 
-    await client.query(
-      `
-      UPDATE staff
-      SET priority_rank = $1
-      WHERE id = $2
-        AND LOWER(role) = 'ta'
-      `,
+    const result = await client.query(
+      `UPDATE staff
+       SET priority_rank = $1
+       WHERE id = $2
+       RETURNING id`,
       [i + 1, id]
     );
+
+    if (result.rowCount === 0) {
+      throw new Error(`No TA found with id ${id}`);
+    }
   }
 }
 }
