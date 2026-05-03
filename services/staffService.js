@@ -377,20 +377,33 @@ async function updateStaff(id, name, email, role, maxWorkload, priorityRank) {
   }
 }
 
-const client = await db.pool.connect();
 
-try {
-  await client.query("BEGIN");
+async function updateTaPriorityOrder(staffIds) {
+  const client = await db.pool.connect();
 
-  await staffRepository.updateTaPriorityOrder(client, staffIds);
+  try {
+    console.log("SERVICE RECEIVED IDS:", staffIds);
 
-  await client.query("COMMIT");
-} catch (e) {
-  await client.query("ROLLBACK");
-  throw e;
-} finally {
-  client.release();
+    await client.query("BEGIN");
+
+    // call repository
+    await staffRepository.updateTaPriorityOrder(client, staffIds);
+
+    await client.query("COMMIT");
+
+    return { message: "Priority updated successfully" };
+
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("PRIORITY UPDATE ERROR:", err);
+    throw new Error("Failed to update priority");
+
+  } finally {
+    client.release();
+  }
 }
+
+
 
 module.exports = {
   addStaff,
