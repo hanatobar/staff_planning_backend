@@ -104,21 +104,12 @@ class StaffRepository {
   }
 
 async updateTaPriorityOrder(client, staffIds) {
-  // Phase 1: assign temporary negative priorities
   for (let i = 0; i < staffIds.length; i++) {
-    await client.query(
-      `
-      UPDATE staff
-      SET priority_rank = $1
-      WHERE id = $2
-        AND LOWER(role) = 'ta'
-      `,
-      [-(i + 1), staffIds[i]]
-    );
-  }
+    const id = Number(staffIds[i]);
+    const priority = i + 1;
 
-  // Phase 2: assign final priorities
-  for (let i = 0; i < staffIds.length; i++) {
+    console.log("UPDATING:", id, "→", priority);
+
     await client.query(
       `
       UPDATE staff
@@ -126,7 +117,7 @@ async updateTaPriorityOrder(client, staffIds) {
       WHERE id = $2
         AND LOWER(role) = 'ta'
       `,
-      [i + 1, staffIds[i]]
+      [priority, id]
     );
   }
 }
