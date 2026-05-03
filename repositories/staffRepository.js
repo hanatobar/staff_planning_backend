@@ -104,10 +104,20 @@ async getAllStaff() {
   }
 
 async updateTaPriorityOrder(client, staffIds) {
+  console.log("🔥 FINAL IDS IN REPO:", staffIds);
+
   for (let i = 0; i < staffIds.length; i++) {
+    const id = staffIds[i];
+
+    if (!Number.isInteger(id)) {
+      throw new Error(`BAD ID IN REPO: ${id}`);
+    }
+
+    console.log(`Updating ID ${id} → rank ${i + 1}`);
+
     await client.query(
       `UPDATE staff SET priority_rank = $1 WHERE id = $2`,
-      [i + 1, staffIds[i]]
+      [i + 1, id]
     );
   }
 }

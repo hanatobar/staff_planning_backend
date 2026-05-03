@@ -78,33 +78,38 @@ class StaffHttpController {
 
 async updateTaPriorityOrder(req, res) {
   try {
-    let { staffIds } = req.body;
+    const { staffIds } = req.body;
 
     if (!Array.isArray(staffIds)) {
-      throw new Error("staffIds must be an array");
+      return res.status(400).json({ error: "staffIds must be an array" });
     }
 
-const cleanIds = staffIds.map((id, index) => {
-  if (id === null || id === undefined) {
-    throw new Error(`Invalid ID at index ${index}`);
-  }
+    const cleanIds = [];
 
-  const parsed = parseInt(id);
+    for (let i = 0; i < staffIds.length; i++) {
+      const id = staffIds[i];
 
-  if (!Number.isInteger(parsed)) {
-    throw new Error(`Invalid ID detected: ${id}`);
-  }
+      console.log("RAW ID:", id, "TYPE:", typeof id);
 
-  return parsed;
-});
+      const parsed = Number(id);
 
-    console.log("FINAL IDS:", cleanIds);
+      if (!Number.isInteger(parsed)) {
+        return res.status(400).json({
+          error: `INVALID ID at index ${i}: ${id}`
+        });
+      }
+
+      cleanIds.push(parsed);
+    }
+
+    console.log("✅ CLEAN IDS:", cleanIds);
 
     const result = await service.updateTaPriorityOrder(cleanIds);
 
-    res.json({ message: result.message });
+    res.json(result);
 
   } catch (err) {
+    console.error("❌ CONTROLLER ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 }
