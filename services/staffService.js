@@ -379,7 +379,7 @@ async function updateStaff(id, name, email, role, maxWorkload, priorityRank) {
 
 
 async function updateTaPriorityOrder(staffIds) {
-  const client = await db.pool.connect();
+  const client = await db.connect();
 
   try {
     console.log("🔥 RECEIVED IDS:", staffIds);
