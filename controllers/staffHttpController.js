@@ -78,8 +78,16 @@ class StaffHttpController {
 
   async updateTaPriorityOrder(req, res) {
     try {
-      const { staffIds } = req.body;
-      console.log("RECEIVED IDS:", staffIds);
+let { staffIds } = req.body;
+
+console.log("RAW IDS:", staffIds);
+
+// 🔥 FORCE CLEAN ARRAY
+staffIds = staffIds
+  .map(id => parseInt(id))
+  .filter(id => !isNaN(id));
+
+console.log("CLEAN IDS:", staffIds);
 
       const result = await service.updateTaPriorityOrder(staffIds);
 

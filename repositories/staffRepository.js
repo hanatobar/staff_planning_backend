@@ -116,6 +116,9 @@ async updateTaPriorityOrder(client, staffIds) {
   // 🔥 STEP 2: assign correct order
   for (let i = 0; i < staffIds.length; i++) {
     const id = Number(staffIds[i]);
+    if (isNaN(id)) {
+  throw new Error(`Invalid ID detected: ${staffIds[i]}`);
+}
     const priority = i + 1;
 
     console.log("UPDATING:", id, "→", priority);
