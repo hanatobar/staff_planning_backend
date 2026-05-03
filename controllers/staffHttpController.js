@@ -80,37 +80,54 @@ async updateTaPriorityOrder(req, res) {
   try {
     const { staffIds } = req.body;
 
-    if (!Array.isArray(staffIds)) {
-      return res.status(400).json({ error: "staffIds must be an array" });
+    // 🔥 1. Validate structure
+    if (!Array.isArray(staffIds) || staffIds.length === 0) {
+      return res.status(400).json({
+        error: "staffIds must be a non-empty array",
+      });
     }
 
     const cleanIds = [];
 
     for (let i = 0; i < staffIds.length; i++) {
-      const id = staffIds[i];
+      const rawId = staffIds[i];
 
-      console.log("RAW ID:", id, "TYPE:", typeof id);
+      console.log(`RAW ID[${i}]:`, rawId, "| TYPE:", typeof rawId);
 
-      const parsed = Number(id);
-
-      if (!Number.isInteger(parsed)) {
+      // 🔥 2. Block null/undefined early
+      if (rawId === null || rawId === undefined) {
         return res.status(400).json({
-          error: `INVALID ID at index ${i}: ${id}`
+          error: `ID is null/undefined at index ${i}`,
+        });
+      }
+
+      // 🔥 3. Convert safely
+      const parsed = Number(rawId);
+
+      // 🔥 4. STRICT validation (this is key)
+      if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
+        return res.status(400).json({
+          error: `Invalid ID at index ${i}: ${rawId}`,
         });
       }
 
       cleanIds.push(parsed);
     }
 
-    console.log("✅ CLEAN IDS:", cleanIds);
+    console.log("✅ FINAL CLEAN IDS:", cleanIds);
 
+    // 🔥 5. Call service with CLEAN data only
     const result = await service.updateTaPriorityOrder(cleanIds);
 
-    res.json(result);
+    return res.json(result);
 
   } catch (err) {
     console.error("❌ CONTROLLER ERROR:", err);
-    res.status(500).json({ error: err.message });
+
+    // 🔥 IMPORTANT: return REAL error
+    return res.status(500).json({
+      error: err.message || "Internal server error",
+    });
   }
 }
 
