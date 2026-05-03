@@ -397,9 +397,9 @@ async function updateTaPriorityOrder(staffIds) {
     const existingTaIds = result.rows.map(r => Number(r.id));
     const incomingIds = staffIds.map(id => Number(id));
 
-    if (existingTaIds.length !== incomingIds.length) {
-      throw new Error("Priority list does not match current TA count");
-    }
+if (!Array.isArray(staffIds) || staffIds.length === 0) {
+  throw new Error("Invalid priority list");
+}
 
     const existingSet = new Set(existingTaIds);
     const incomingSet = new Set(incomingIds);
