@@ -397,7 +397,7 @@ async function updateTaPriorityOrder(staffIds) {
   } catch (err) {
     await client.query("ROLLBACK");
     console.error("❌ PRIORITY UPDATE ERROR:", err);
-    throw new Error("Failed to update priority");
+throw err;
 
   } finally {
     client.release();
