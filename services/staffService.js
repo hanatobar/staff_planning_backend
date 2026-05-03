@@ -377,36 +377,19 @@ async function updateStaff(id, name, email, role, maxWorkload, priorityRank) {
   }
 }
 
-async function updateTaPriorityOrder(staffIds) {
-  const client = await db.connect();
+const client = await db.pool.connect();
 
-  try {
-    await client.query("BEGIN");
+try {
+  await client.query("BEGIN");
 
-    if (!Array.isArray(staffIds) || staffIds.length === 0) {
-      throw new Error("Invalid priority list");
-    }
+  await staffRepository.updateTaPriorityOrder(client, staffIds);
 
-    for (let i = 0; i < staffIds.length; i++) {
-      const id = Number(staffIds[i]);
-      const priority = i + 1;
-
-      await client.query(
-        `UPDATE staff SET priority_rank = $1 WHERE id = $2`,
-        [priority, id]
-      );
-    }
-
-    await client.query("COMMIT");
-
-    return { message: "TA priority order updated successfully" };
-
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
-  }
+  await client.query("COMMIT");
+} catch (e) {
+  await client.query("ROLLBACK");
+  throw e;
+} finally {
+  client.release();
 }
 
 module.exports = {
