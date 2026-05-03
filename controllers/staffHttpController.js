@@ -79,6 +79,7 @@ class StaffHttpController {
   async updateTaPriorityOrder(req, res) {
     try {
       const { staffIds } = req.body;
+      console.log("RECEIVED IDS:", staffIds);
 
       const result = await service.updateTaPriorityOrder(staffIds);
 
