@@ -104,22 +104,26 @@ async getAllStaff() {
   }
 
 async updateTaPriorityOrder(client, staffIds) {
-  console.log("🔥 FINAL IDS BEFORE DB:", staffIds);
+  console.log("🔥 IDS IN REPO:", staffIds);
 
   for (let i = 0; i < staffIds.length; i++) {
-    const id = Number(staffIds[i]);
+    const id = staffIds[i];
 
-    console.log(`Checking ID:`, staffIds[i], "→", id);
-
-    if (!Number.isInteger(id)) {
-      throw new Error(`❌ INVALID ID BEFORE QUERY: ${staffIds[i]}`);
-    }
-
-    await client.query(
-      `UPDATE staff SET priority_rank = $1 WHERE id = $2`,
-      [i + 1, id]   // 🔥 ONLY SAFE VALUE PASSES
+    const result = await client.query(
+      `UPDATE staff
+       SET priority_rank = $1
+       WHERE id = $2`,
+      [i + 1, id]
     );
+
+    console.log(`Updated ID ${id} → rows affected: ${result.rowCount}`);
+
+    if (result.rowCount === 0) {
+      throw new Error(`No row updated for id ${id}`);
+    }
   }
+
+  return { message: "Priority updated successfully" };
 }
 }
 
