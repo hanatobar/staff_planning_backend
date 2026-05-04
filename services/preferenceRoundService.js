@@ -4,6 +4,16 @@ const db = require("../db/database");
 const notificationService = require("./notificationService");
 
 class PreferenceRoundService {
+
+    async  safeSendEmail(to, subject, text) {
+  try {
+    await emailService.sendEmail(to, subject, text);
+  } catch (err) {
+    console.error("Email failed for:", to, err.message);
+  }
+}
+
+
   async openRound(startAt, endAt, userId, conflictResolutionMode, semester) {
     if (new Date(startAt) >= new Date(endAt)) {
       throw new Error("Start time must be before end time");
@@ -63,38 +73,59 @@ const formattedEnd = new Date(endAt).toLocaleString('en-GB', {
   timeStyle: 'short'
 });
 
-(async () => {
+setImmediate(async () => {
   try {
     await Promise.all(
       tas.rows.map(async (ta) => {
-        await emailService.sendEmail(
-          ta.email,
-          "Preference Round Opened",
-`Hello ${ta.name},
+        try {
+          const emailText = `Hello ${ta.name},
 
-A new preference submission round is now available.
+A new preference round has been created.
 
 Semester: ${normalizedSemester}
 Start: ${formattedStart}
 Deadline: ${formattedEnd}
 
-Please submit before deadline.`
-        );
+Please submit your preferences before the deadline.
 
-        await notificationService.createSystemNotification(
-          ta.user_id,
-          "Preference Round Created",
-          `A new preference round is available.`,
-          "ROUND_OPENED",
-          round.id,
-          null
-        );
+Regards,
+Staff Planning System`;
+
+          console.log("📧 Sending email to:", ta.email);
+
+          await emailService.sendEmail(
+            ta.email,
+            "Preference Round Opened",
+            emailText
+          );
+
+          await notificationService.createSystemNotification(
+            ta.user_id,
+            "Preference Round Created",
+            `New preference round available:
+
+Semester: ${normalizedSemester}
+Start: ${formattedStart}
+Deadline: ${formattedEnd}
+
+Submit before deadline.`,
+            "ROUND_OPENED",
+            round.id,
+            null
+          );
+
+        } catch (err) {
+          console.error("❌ Failed for TA:", ta.email, err.message);
+        }
       })
     );
+
+    console.log("✅ All open round emails + notifications processed");
+
   } catch (err) {
-    console.error("Background email/notification error:", err);
+    console.error("❌ Background job failed:", err);
   }
-})();
+});
 
     return { message: "Preference round opened successfully" };
   }
@@ -102,6 +133,8 @@ Please submit before deadline.`
   async getCurrentRound() {
     return await this.getReadableRound();
   }
+
+
   async getCoordinatorUser() {
   const result = await db.query(`
     SELECT id, email
@@ -174,26 +207,53 @@ setImmediate(async () => {
   try {
     await Promise.all(
       nonSubmitters.rows.map(async (ta) => {
-        await emailService.sendEmail(
+
+        const emailText = `Hello ${ta.name},
+
+You did not submit your preferences before the deadline.
+
+📅 Semester: ${round.semester}
+⏰ Deadline: ${new Date(round.end_at).toLocaleString('en-GB', {
+  timeZone: 'Africa/Cairo',
+  dateStyle: 'medium',
+  timeStyle: 'short'
+})}
+
+As a result, you will not be included in automatic assignment.
+
+Regards,
+Staff Planning System`;
+
+        await safeSendEmail(
           ta.email,
           "Missed Preference Deadline",
-`Hello ${ta.name},
-
-You missed the deadline for the preference round.`
+          emailText
         );
 
         await notificationService.createSystemNotification(
           ta.user_id,
           "Preference Deadline Missed",
-          "You did not submit your preferences before the deadline.",
+          `You missed the preference round deadline.
+
+Semester: ${round.semester}
+Deadline: ${new Date(round.end_at).toLocaleString('en-GB', {
+  timeZone: 'Africa/Cairo',
+  dateStyle: 'medium',
+  timeStyle: 'short'
+})}
+
+You will be handled manually.`,
           "ROUND_MISSED_DEADLINE",
           round.id,
           null
         );
       })
     );
+
+    console.log("✅ Missed deadline notifications sent");
+
   } catch (err) {
-    console.error("Error sending missed deadline emails:", err);
+    console.error("❌ Error sending missed deadline notifications:", err);
   }
 });
 

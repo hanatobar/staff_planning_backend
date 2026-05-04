@@ -22,8 +22,9 @@ class EmailService {
 
       console.log("Email sent to:", to);
     } catch (error) {
-      console.error("Email error:", error);
-    }
+    console.error("❌ Email error for:", to, error.message);
+    throw error;
+  }
   }
 }
 
