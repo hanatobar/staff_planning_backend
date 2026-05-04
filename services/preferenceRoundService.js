@@ -18,6 +18,7 @@ async safeSendEmail(to, subject, text) {
 }
 
 
+
 async handleOpenRoundBackground(round, semester, startAt, endAt) {
   try {
     const tas = await db.query(`

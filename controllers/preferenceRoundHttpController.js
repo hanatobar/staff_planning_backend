@@ -42,6 +42,8 @@ class PreferenceRoundHttpController {
 
 async getCurrentRound(req, res) {
   try {
+        await service.autoLockIfNeeded();
+
     const data = await service.getCurrentRound();
 
     if (!data) {
