@@ -170,29 +170,32 @@ async getReadableRound() {
         AND pss.status = 'NON_SUBMITTER'
     `, [round.id]);
 
-    for (const ta of nonSubmitters.rows) {
-      await emailService.sendEmail(
-        ta.email,
-        "Missed Preference Deadline",
+setImmediate(async () => {
+  try {
+    await Promise.all(
+      nonSubmitters.rows.map(async (ta) => {
+        await emailService.sendEmail(
+          ta.email,
+          "Missed Preference Deadline",
 `Hello ${ta.name},
 
-The preference submission deadline has passed, and no preference submission was received for the current round.
+You missed the deadline for the preference round.`
+        );
 
-As a result, you will not be included in the automatic assignment process for this round.
-Any necessary assignment handling will be completed manually by the coordinator.
-
-Regards,
-Staff Planning System`
-      );
-          await notificationService.createSystemNotification(
-  ta.user_id,
-  "Preference Deadline Missed",
-  "You did not submit your preferences before the deadline. You will be handled manually by the coordinator.",
-  "ROUND_MISSED_DEADLINE",
-  round.id,
-  null
-);
-    }
+        await notificationService.createSystemNotification(
+          ta.user_id,
+          "Preference Deadline Missed",
+          "You did not submit your preferences before the deadline.",
+          "ROUND_MISSED_DEADLINE",
+          round.id,
+          null
+        );
+      })
+    );
+  } catch (err) {
+    console.error("Error sending missed deadline emails:", err);
+  }
+});
 
 
 
