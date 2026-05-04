@@ -73,6 +73,16 @@ const formattedEnd = new Date(endAt).toLocaleString('en-GB', {
   timeStyle: 'short'
 });
 
+console.log("🧪 TEST EMAIL START");
+
+await emailService.sendEmail(
+  "yourpersonalemail@gmail.com",
+  "TEST EMAIL",
+  "If you see this → email works"
+);
+
+console.log("🧪 TEST EMAIL SENT");
+
 setImmediate(() => {
   console.log("🚀 Background job started: sending open round emails");
 
