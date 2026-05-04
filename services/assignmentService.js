@@ -1228,7 +1228,7 @@ async submitAppeal(assignmentId, staffId, appealedHours, reason) {
   await notificationService.createSystemNotification(
     Number(coordinator.id),
     "New Assignment Appeal",
-    "A TA submitted a new assignment appeal. Please review it.",
+    "A TA submitted a new assignment appeal. Please review it. Test",
     "APPEAL_SUBMITTED",
     round.id,
     assignmentId
