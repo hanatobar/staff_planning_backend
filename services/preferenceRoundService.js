@@ -180,6 +180,9 @@ async getReadableRound() {
 
 async handleLockRoundBackground(round, isAuto) {
   try {
+    console.log("🚀 Lock background started for round:", round.id);
+
+    // 🔹 1. Get non-submitters
     const nonSubmitters = await db.query(`
       SELECT s.id, s.user_id, s.name, s.email
       FROM preference_submission_status pss
@@ -194,38 +197,49 @@ async handleLockRoundBackground(round, isAuto) {
       timeStyle: 'short'
     });
 
-    // ✅ EMAILS parallel
+    // 🔹 2. Send emails + notifications to non-submitters (parallel, safe)
     await Promise.all(
-      nonSubmitters.rows.map(ta =>
-        this.safeSendEmail(
-          ta.email,
-          "Missed Preference Deadline",
-          `Hello ${ta.name},
+      nonSubmitters.rows.map(async (ta) => {
+        await Promise.all([
+          (async () => {
+            try {
+              await this.safeSendEmail(
+                ta.email,
+                "Missed Preference Deadline",
+                `Hello ${ta.name},
 
 Semester: ${round.semester}
 Deadline: ${deadline}
 
 You missed the submission.`
-        )
-      )
-    );
+              );
+              console.log("📧 Email sent to:", ta.email);
+            } catch (err) {
+              console.error("❌ Email failed:", ta.email, err.message);
+            }
+          })(),
 
-    // ✅ NOTIFICATIONS parallel
-    await Promise.all(
-      nonSubmitters.rows.map(ta =>
-        notificationService.createSystemNotification(
-          ta.user_id,
-          "Preference Deadline Missed",
-          `Semester: ${round.semester}
+          (async () => {
+            try {
+              await notificationService.createSystemNotification(
+                ta.user_id,
+                "Preference Deadline Missed",
+                `Semester: ${round.semester}
 Deadline: ${deadline}`,
-          "ROUND_MISSED_DEADLINE",
-          round.id,
-          null
-        )
-      )
+                "ROUND_MISSED_DEADLINE",
+                round.id,
+                null
+              );
+              console.log("🔔 Notification sent to:", ta.user_id);
+            } catch (err) {
+              console.error("❌ Notification failed:", ta.user_id, err.message);
+            }
+          })()
+        ]);
+      })
     );
 
-    // ✅ SUMMARY (coordinator)
+    // 🔹 3. Get summary
     const summary = await db.query(`
       SELECT
         COUNT(*) FILTER (WHERE status = 'SUBMITTED') AS submitted,
@@ -235,16 +249,55 @@ Deadline: ${deadline}`,
     `, [round.id]);
 
     const result = summary.rows[0];
+
+    // 🔹 4. Get coordinator
     const coordinator = await this.getCoordinatorUser();
 
-    await this.safeSendEmail(
-      coordinator.email,
-      isAuto ? "Auto Locked" : "Round Summary",
-      `Submitted: ${result.submitted}
-Non-submitters: ${result.non_submitters}`
-    );
+    // 🔹 5. Send coordinator email + notification (parallel + safe)
+    await Promise.all([
+      (async () => {
+        try {
+          console.log("📢 Sending coordinator notification...");
 
-    console.log("✅ Lock background done");
+          await notificationService.createSystemNotification(
+            coordinator.id, // ⚠️ change to coordinator.user_id if needed
+            "Preference Round Summary",
+            `Round ${round.id} has ended.
+
+Submitted: ${result.submitted}
+Non-submitters: ${result.non_submitters}`,
+            "COORDINATOR_NOTICE",
+            round.id,
+            null
+          );
+
+          console.log("✅ Coordinator notification sent");
+
+        } catch (err) {
+          console.error("❌ Coordinator notification failed:", err.message);
+        }
+      })(),
+
+      (async () => {
+        try {
+          await this.safeSendEmail(
+            coordinator.email,
+            isAuto ? "Preference Round Automatically Locked" : "Preference Round Summary",
+            `The preference round has been locked.
+
+Submitted: ${result.submitted}
+Non-submitters: ${result.non_submitters}`
+          );
+
+          console.log("📧 Coordinator email sent");
+
+        } catch (err) {
+          console.error("❌ Coordinator email failed:", err.message);
+        }
+      })()
+    ]);
+
+    console.log("✅ Lock background finished successfully");
 
   } catch (err) {
     console.error("❌ Lock background failed:", err.message);

@@ -78,6 +78,9 @@ async getNotificationsByUser(userId) {
     );
   }
 
+  
+
+
   async schedule15MinReminderIfNeeded(round) {
     const start = new Date(round.start_at);
     const end = new Date(round.end_at);
