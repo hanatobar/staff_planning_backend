@@ -1,3 +1,4 @@
+require('dns').setDefaultResultOrder('ipv4first');
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 require('dotenv').config();

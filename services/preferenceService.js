@@ -6,7 +6,7 @@ const roundService = require("./preferenceRoundService");
 class PreferenceService {
 
 async validateRoundIsOpen() {
-  const round = await roundService.autoLockIfNeeded();
+  const round = await roundService.getCurrentRound();
 
   if (!round) {
     throw new Error("No preference round exists");
