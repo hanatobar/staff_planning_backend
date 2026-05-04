@@ -39,7 +39,13 @@ if (semesterExists.rows.length === 0) {
 }
 
     await this.autoLockIfNeeded();
+    setImmediate(async () => {
+  try {
     await repo.autoLockExpiredRounds();
+  } catch (err) {
+    console.error("❌ Auto lock failed:", err.message);
+  }
+});
     const activeRound = await repo.getActiveUnlockedRound();
     if (activeRound) {
       throw new Error("Cannot open a new round while another active unlocked round exists");
@@ -51,14 +57,28 @@ const round = await repo.createRound(
   userId,
   conflictResolutionMode,
   normalizedSemester
-);    await repo.initializeSubmissionStatus(round.id);
+);   setImmediate(async () => {
+  try {
+    await repo.initializeSubmissionStatus(round.id);
+    console.log("✅ Submission status initialized");
+  } catch (err) {
+    console.error("❌ Init submission failed:", err.message);
+  }
+});
 
+    setImmediate(async () => {
+  try {
     await notificationService.schedule15MinReminderIfNeeded(round);
+    console.log("✅ Reminder scheduled");
+  } catch (err) {
+    console.error("❌ Reminder failed:", err.message);
+  }
+});
 
     const tas = await db.query(`
       SELECT id, user_id, name, email
       FROM staff
-      WHERE LOWER(role) = 'ta'
+      WHERE LOWER(TRIM(role)) IN ('ta', 'teaching assistant')
     `);
       
 const formattedStart = new Date(startAt).toLocaleString('en-GB', {
@@ -73,21 +93,14 @@ const formattedEnd = new Date(endAt).toLocaleString('en-GB', {
   timeStyle: 'short'
 });
 
-console.log("🧪 TEST EMAIL START");
+console.log("👥 TAs count:", tas.rows.length);
+setImmediate(async () => {
+  console.log("🚀 Sending open round emails & notifications");
 
-await emailService.sendEmail(
-  "hanatobar27@gmail.com",
-  "TEST EMAIL",
-  "If you see this → email works"
-);
-
-console.log("🧪 TEST EMAIL SENT");
-
-setImmediate(() => {
-  console.log("🚀 Background job started: sending open round emails");
-
-  tas.rows.forEach(async (ta) => {
+  for (const ta of tas.rows) {
     try {
+      console.log("📧 Sending to:", ta.email);
+
       const emailText = `Hello ${ta.name},
 
 A new preference round has been created.
@@ -98,13 +111,11 @@ Deadline: ${formattedEnd}
 
 Please submit your preferences before the deadline.`;
 
-      console.log("📧 Sending email to:", ta.email);
-
-      await emailService.sendEmail(
-        ta.email,
-        "Preference Round Opened",
-        emailText
-      );
+await this.safeSendEmail(
+  ta.email,
+  "Preference Round Opened",
+  emailText
+);
 
       await notificationService.createSystemNotification(
         ta.user_id,
@@ -119,12 +130,14 @@ Submit before deadline.`,
         null
       );
 
-      console.log("✅ Done for:", ta.email);
+      console.log("✅ Done:", ta.email);
 
     } catch (err) {
-      console.error("❌ Failed for:", ta.email, err.message);
+      console.error("❌ Failed:", ta.email, err.message);
     }
-  });
+  }
+
+  console.log("✅ All notifications processed");
 });
 
     return { message: "Preference round opened successfully" };
@@ -203,10 +216,8 @@ async getReadableRound() {
         AND pss.status = 'NON_SUBMITTER'
     `, [round.id]);
 
-setImmediate(() => {
-  console.log("🚀 Sending missed deadline emails");
-
-  nonSubmitters.rows.forEach(async (ta) => {
+setImmediate(async () => {
+  for (const ta of nonSubmitters.rows) {
     try {
       const deadline = new Date(round.end_at).toLocaleString('en-GB', {
         timeZone: 'Africa/Cairo',
@@ -214,39 +225,31 @@ setImmediate(() => {
         timeStyle: 'short'
       });
 
-      console.log("📧 Sending missed email to:", ta.email);
-
       await emailService.sendEmail(
         ta.email,
         "Missed Preference Deadline",
 `Hello ${ta.name},
 
-You did not submit your preferences before the deadline.
-
 Semester: ${round.semester}
 Deadline: ${deadline}
 
-You will be handled manually by the coordinator.`
+You missed the submission.`
       );
 
       await notificationService.createSystemNotification(
         ta.user_id,
         "Preference Deadline Missed",
         `Semester: ${round.semester}
-Deadline: ${deadline}
-
-You missed the submission.`,
+Deadline: ${deadline}`,
         "ROUND_MISSED_DEADLINE",
         round.id,
         null
       );
 
-      console.log("✅ Missed processed:", ta.email);
-
     } catch (err) {
       console.error("❌ Failed missed:", ta.email, err.message);
     }
-  });
+  }
 });
 
 

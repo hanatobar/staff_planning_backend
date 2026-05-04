@@ -33,7 +33,7 @@ async sendEmail(to, subject, text) {
 
   } catch (error) {
     console.error("❌ Email FAILED:", error);
-    throw error; // 🔥 DO NOT REMOVE
+    
   }
 }
 }
