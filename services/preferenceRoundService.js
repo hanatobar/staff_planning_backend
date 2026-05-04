@@ -73,12 +73,9 @@ const formattedEnd = new Date(endAt).toLocaleString('en-GB', {
   timeStyle: 'short'
 });
 
-setImmediate(async () => {
+for (const ta of tas.rows) {
   try {
-    await Promise.all(
-      tas.rows.map(async (ta) => {
-        try {
-          const emailText = `Hello ${ta.name},
+    const emailText = `Hello ${ta.name},
 
 A new preference round has been created.
 
@@ -91,41 +88,31 @@ Please submit your preferences before the deadline.
 Regards,
 Staff Planning System`;
 
-          console.log("📧 Sending email to:", ta.email);
+    console.log("📧 Sending email to:", ta.email);
 
-          await emailService.sendEmail(
-            ta.email,
-            "Preference Round Opened",
-            emailText
-          );
+    await emailService.sendEmail(
+      ta.email,
+      "Preference Round Opened",
+      emailText
+    );
 
-          await notificationService.createSystemNotification(
-            ta.user_id,
-            "Preference Round Created",
-            `New preference round available:
-
-Semester: ${normalizedSemester}
+    await notificationService.createSystemNotification(
+      ta.user_id,
+      "Preference Round Created",
+      `Semester: ${normalizedSemester}
 Start: ${formattedStart}
 Deadline: ${formattedEnd}
 
 Submit before deadline.`,
-            "ROUND_OPENED",
-            round.id,
-            null
-          );
-
-        } catch (err) {
-          console.error("❌ Failed for TA:", ta.email, err.message);
-        }
-      })
+      "ROUND_OPENED",
+      round.id,
+      null
     );
 
-    console.log("✅ All open round emails + notifications processed");
-
   } catch (err) {
-    console.error("❌ Background job failed:", err);
+    console.error("❌ Failed for:", ta.email, err.message);
   }
-});
+}
 
     return { message: "Preference round opened successfully" };
   }
@@ -203,59 +190,50 @@ async getReadableRound() {
         AND pss.status = 'NON_SUBMITTER'
     `, [round.id]);
 
-setImmediate(async () => {
+for (const ta of nonSubmitters.rows) {
   try {
-    await Promise.all(
-      nonSubmitters.rows.map(async (ta) => {
+    const deadline = new Date(round.end_at).toLocaleString('en-GB', {
+      timeZone: 'Africa/Cairo',
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
 
-        const emailText = `Hello ${ta.name},
+    const emailText = `Hello ${ta.name},
 
 You did not submit your preferences before the deadline.
 
-📅 Semester: ${round.semester}
-⏰ Deadline: ${new Date(round.end_at).toLocaleString('en-GB', {
-  timeZone: 'Africa/Cairo',
-  dateStyle: 'medium',
-  timeStyle: 'short'
-})}
+Semester: ${round.semester}
+Deadline: ${deadline}
 
-As a result, you will not be included in automatic assignment.
+You will be handled manually by the coordinator.
 
 Regards,
 Staff Planning System`;
 
-        await safeSendEmail(
-          ta.email,
-          "Missed Preference Deadline",
-          emailText
-        );
+    console.log("📧 Sending missed email to:", ta.email);
 
-        await notificationService.createSystemNotification(
-          ta.user_id,
-          "Preference Deadline Missed",
-          `You missed the preference round deadline.
-
-Semester: ${round.semester}
-Deadline: ${new Date(round.end_at).toLocaleString('en-GB', {
-  timeZone: 'Africa/Cairo',
-  dateStyle: 'medium',
-  timeStyle: 'short'
-})}
-
-You will be handled manually.`,
-          "ROUND_MISSED_DEADLINE",
-          round.id,
-          null
-        );
-      })
+    await emailService.sendEmail(
+      ta.email,
+      "Missed Preference Deadline",
+      emailText
     );
 
-    console.log("✅ Missed deadline notifications sent");
+    await notificationService.createSystemNotification(
+      ta.user_id,
+      "Preference Deadline Missed",
+      `Semester: ${round.semester}
+Deadline: ${deadline}
+
+You missed the submission.`,
+      "ROUND_MISSED_DEADLINE",
+      round.id,
+      null
+    );
 
   } catch (err) {
-    console.error("❌ Error sending missed deadline notifications:", err);
+    console.error("❌ Failed missed email:", ta.email, err.message);
   }
-});
+}
 
 
 
