@@ -29,6 +29,8 @@ const result = await service.openRound(
 
   async getCurrentRound(call, callback) {
     try {
+          notificationService.checkAndSend15MinReminder();
+
       const round = await service.getCurrentRound();
 
       if (!round) {

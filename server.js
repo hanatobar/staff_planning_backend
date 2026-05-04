@@ -188,11 +188,7 @@ const express = require("express");
 const app = express();
 
 app.use(express.json());
-const notificationService = require("./services/notificationService");
 
-setTimeout(() => {
-  notificationService.startScheduleProcessor();
-}, 5000);
 
 // Health check route
 app.get("/", (req, res) => {
