@@ -57,23 +57,11 @@ const round = await repo.createRound(
   userId,
   conflictResolutionMode,
   normalizedSemester
-);   setImmediate(async () => {
-  try {
-    await repo.initializeSubmissionStatus(round.id);
-    console.log("✅ Submission status initialized");
-  } catch (err) {
-    console.error("❌ Init submission failed:", err.message);
-  }
-});
+);  
+await repo.initializeSubmissionStatus(round.id);
+await notificationService.schedule15MinReminderIfNeeded(round);
 
-    setImmediate(async () => {
-  try {
-    await notificationService.schedule15MinReminderIfNeeded(round);
-    console.log("✅ Reminder scheduled");
-  } catch (err) {
-    console.error("❌ Reminder failed:", err.message);
-  }
-});
+
 
     const tas = await db.query(`
       SELECT id, user_id, name, email
@@ -93,15 +81,12 @@ const formattedEnd = new Date(endAt).toLocaleString('en-GB', {
   timeStyle: 'short'
 });
 
-console.log("👥 TAs count:", tas.rows.length);
-setImmediate(async () => {
-  console.log("🚀 Sending open round emails & notifications");
-
-  for (const ta of tas.rows) {
-    try {
-      console.log("📧 Sending to:", ta.email);
-
-      const emailText = `Hello ${ta.name},
+await Promise.all(
+  tas.rows.map(ta =>
+    this.safeSendEmail(
+      ta.email,
+      "Preference Round Opened",
+      `Hello ${ta.name},
 
 A new preference round has been created.
 
@@ -109,36 +94,26 @@ Semester: ${normalizedSemester}
 Start: ${formattedStart}
 Deadline: ${formattedEnd}
 
-Please submit your preferences before the deadline.`;
-
-await this.safeSendEmail(
-  ta.email,
-  "Preference Round Opened",
-  emailText
+Please submit your preferences before the deadline.`
+    )
+  )
 );
 
-      await notificationService.createSystemNotification(
-        ta.user_id,
-        "Preference Round Created",
-        `Semester: ${normalizedSemester}
+// ✅ PARALLEL NOTIFICATIONS
+await Promise.all(
+  tas.rows.map(ta =>
+    notificationService.createSystemNotification(
+      ta.user_id,
+      "Preference Round Created",
+      `Semester: ${normalizedSemester}
 Start: ${formattedStart}
-Deadline: ${formattedEnd}
-
-Submit before deadline.`,
-        "ROUND_OPENED",
-        round.id,
-        null
-      );
-
-      console.log("✅ Done:", ta.email);
-
-    } catch (err) {
-      console.error("❌ Failed:", ta.email, err.message);
-    }
-  }
-
-  console.log("✅ All notifications processed");
-});
+Deadline: ${formattedEnd}`,
+      "ROUND_OPENED",
+      round.id,
+      null
+    )
+  )
+);
 
     return { message: "Preference round opened successfully" };
   }
