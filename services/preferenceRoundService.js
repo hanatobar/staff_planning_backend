@@ -68,7 +68,7 @@ await emailService.sendEmail(
   "Preference Round Opened",
 `Hello ${ta.name},
 
-A new preference submission round is now available in the Staff Planning System.
+A new preference submission round is now available in the Staff Planning System test.
 
 Semester: ${normalizedSemester}
 Start: ${formattedStart}
