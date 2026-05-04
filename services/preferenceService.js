@@ -105,12 +105,23 @@ async getPreferencesByStaff(staff_id) {
 }
 
 async getCurrentRoundSemesterCourses(roundId) {
-  const result = await db.query(`
-    SELECT c.id
-    FROM course c
-    JOIN preference_round pr ON LOWER(TRIM(c.semester)) = LOWER(TRIM(pr.semester))
-    WHERE pr.id = $1
+  const roundRes = await db.query(`
+    SELECT semester FROM preference_round WHERE id = $1
   `, [roundId]);
+
+  if (roundRes.rows.length === 0) return [];
+
+  const semester = roundRes.rows[0].semester;
+
+  console.log("ROUND SEMESTER:", semester);
+
+  const result = await db.query(`
+    SELECT id
+    FROM course
+    WHERE LOWER(TRIM(semester)) = LOWER(TRIM($1))
+  `, [semester]);
+
+  console.log("COURSES FOUND:", result.rows);
 
   return result.rows.map(r => Number(r.id));
 }
