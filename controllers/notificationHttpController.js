@@ -6,7 +6,7 @@ class NotificationHttpController {
     try {
       const userId = Number(req.params.userId);
 
-      notificationService.checkAndSend15MinReminder();
+      
 
       const data = await service.getNotificationsByUser(userId);
 
