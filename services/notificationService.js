@@ -78,7 +78,16 @@ async getNotificationsByUser(userId) {
     );
   }
 
-  
+  startScheduleProcessor() {
+  setInterval(async () => {
+    try {
+      console.log("⏰ Checking pending reminders...");
+      await this.processPendingSchedules();
+    } catch (err) {
+      console.error("❌ Schedule error:", err.message);
+    }
+  }, 30000);
+}
 
 
   async schedule15MinReminderIfNeeded(round) {

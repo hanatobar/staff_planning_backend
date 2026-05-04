@@ -250,7 +250,7 @@ if (conflictMode === "PRIORITY") {
   }
 }
         await this.saveConflicts(conflicts, lockedRound.id);
-        await this.sendConflictEmails(conflicts);
+        this.sendConflictEmails(conflicts).catch(console.error);
 
 
     const unfilledBeforeFallback = Object.values(courseMap)
@@ -276,19 +276,17 @@ this.rebalanceAssignmentsForFairness(
   protectedAssignments
 );
 
-for (const key of Object.keys(assignmentMap)) {
-  const a = assignmentMap[key];
-
-  if (a.hours <= 0) continue;
-
-  await repo.insertAssignment(
-    a.staffId,
-    a.courseId,
-    a.hours,
-    lockedRound.id,
-    "AUTO"
-  );
-}
+await Promise.all(
+  Object.values(assignmentMap).map(a =>
+    repo.insertAssignment(
+      a.staffId,
+      a.courseId,
+      a.hours,
+      lockedRound.id,
+      "AUTO"
+    )
+  )
+);
 
     const finalUnfilled = Object.values(courseMap)
       .filter(c => c.remainingHours > 0)

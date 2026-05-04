@@ -55,14 +55,26 @@ class AssignmentHttpController {
     }
   }
 
-  async generatePlan(req, res) {
-    try {
-      const result = await service.generatePlan();
-      res.json(result);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
+async generatePlan(req, res) {
+  try {
+
+    // ✅ respond immediately
+    res.json({ message: "Plan generation started..." });
+
+    // 🔥 run in background
+    setImmediate(async () => {
+      try {
+        await service.generatePlan();
+        console.log("✅ Plan generated");
+      } catch (err) {
+        console.error("❌ Generation failed:", err.message);
+      }
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
+}
 
   async approvePlan(req, res) {
     try {
