@@ -30,13 +30,15 @@ async handleOpenRoundBackground(round, semester, startAt, endAt) {
     const formattedStart = new Date(startAt).toLocaleString('en-US', {
       timeZone: 'Africa/Cairo',
       dateStyle: 'medium',
-      timeStyle: 'short'
+      timeStyle: 'short',
+      hour12 : true
     });
 
     const formattedEnd = new Date(endAt).toLocaleString('en-US', {
       timeZone: 'Africa/Cairo',
       dateStyle: 'medium',
-      timeStyle: 'short'
+      timeStyle: 'short',
+      hour12 : true
     });
 
     console.log("🚀 Background tasks started");
@@ -192,7 +194,7 @@ async handleLockRoundBackground(round, isAuto) {
         AND pss.status = 'NON_SUBMITTER'
     `, [round.id]);
 
-    const deadline = new Date(round.end_at).toLocaleString('en-GB', {
+    const deadline = new Date(round.end_at).toLocaleString('en-US', {
       timeZone: 'Africa/Cairo',
       dateStyle: 'medium',
       timeStyle: 'short'

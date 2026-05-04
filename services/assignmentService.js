@@ -1058,12 +1058,19 @@ async assignUncoveredHours(targetStaffId, courseId, hours) {
     throw new Error("Hours must be greater than zero");
   }
 
-  const nonSubmitters = await repo.getNonSubmittersByRound(round.id);
-  const target = nonSubmitters.find(s => Number(s.staff_id) === Number(targetStaffId));
+const nonSubmitters = await repo.getNonSubmittersByRound(round.id);
 
-  if (!target) {
-    throw new Error("Target TA is not a non-submitter in the current round");
-  }
+console.log("NON SUBMITTERS:", nonSubmitters.map(s => s.staff_id));
+
+const target = nonSubmitters.find(
+  s => Number(s.staff_id) === Number(targetStaffId)
+);
+
+if (!target) {
+  throw new Error(
+    `Target TA ${targetStaffId} not found in non-submitters list`
+  );
+}
 
   const uncovered = await repo.getUncoveredHoursByRound(round.id);
   const course = uncovered.find(c => Number(c.course_id) === Number(courseId));
