@@ -5,118 +5,133 @@ const notificationService = require("./notificationService");
 
 class PreferenceRoundService {
 
-    async  safeSendEmail(to, subject, text) {
+async safeSendEmail(to, subject, text) {
   try {
+    console.log("📧 Sending email to:", to);
+
     await emailService.sendEmail(to, subject, text);
+
+    console.log("✅ Email sent:", to);
   } catch (err) {
-    console.error("Email failed for:", to, err.message);
+    console.error("❌ Email failed:", to, err.message);
   }
 }
 
 
-  async openRound(startAt, endAt, userId, conflictResolutionMode, semester) {
-    if (new Date(startAt) >= new Date(endAt)) {
-      throw new Error("Start time must be before end time");
-    }
-    if (!["FAIRNESS", "PRIORITY"].includes(conflictResolutionMode)) {
-  throw new Error("Invalid conflict resolution mode");
-}
-const normalizedSemester = (semester || "").trim().toLowerCase();
-
-if (!normalizedSemester) {
-  throw new Error("Semester is required");
-}
-
-const semesterExists = await db.query(`
-  SELECT 1
-  FROM course
-  WHERE LOWER(TRIM(semester)) = $1
-  LIMIT 1
-`, [normalizedSemester]);
-
-if (semesterExists.rows.length === 0) {
-  throw new Error("Selected semester does not exist in courses");
-}
-
-    await this.autoLockIfNeeded();
-    setImmediate(async () => {
+async handleOpenRoundBackground(round, semester, startAt, endAt) {
   try {
-    await repo.autoLockExpiredRounds();
-  } catch (err) {
-    console.error("❌ Auto lock failed:", err.message);
-  }
-});
-    const activeRound = await repo.getActiveUnlockedRound();
-    if (activeRound) {
-      throw new Error("Cannot open a new round while another active unlocked round exists");
-    }
-
-const round = await repo.createRound(
-  startAt,
-  endAt,
-  userId,
-  conflictResolutionMode,
-  normalizedSemester
-);  
-await repo.initializeSubmissionStatus(round.id);
-await notificationService.schedule15MinReminderIfNeeded(round);
-
-
-
     const tas = await db.query(`
       SELECT id, user_id, name, email
       FROM staff
       WHERE LOWER(TRIM(role)) IN ('ta', 'teaching assistant')
     `);
-      
-const formattedStart = new Date(startAt).toLocaleString('en-GB', {
-  timeZone: 'Africa/Cairo',
-  dateStyle: 'medium',
-  timeStyle: 'short'
-});
 
-const formattedEnd = new Date(endAt).toLocaleString('en-GB', {
-  timeZone: 'Africa/Cairo',
-  dateStyle: 'medium',
-  timeStyle: 'short'
-});
+    const formattedStart = new Date(startAt).toLocaleString('en-GB', {
+      timeZone: 'Africa/Cairo',
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
 
-await Promise.all(
-  tas.rows.map(ta =>
-    this.safeSendEmail(
-      ta.email,
-      "Preference Round Opened",
-      `Hello ${ta.name},
+    const formattedEnd = new Date(endAt).toLocaleString('en-GB', {
+      timeZone: 'Africa/Cairo',
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
 
-A new preference round has been created.
+    console.log("🚀 Background tasks started");
 
-Semester: ${normalizedSemester}
+    // ✅ EMAILS (parallel)
+    await Promise.all(
+      tas.rows.map(ta =>
+        this.safeSendEmail(
+          ta.email,
+          "Preference Round Opened",
+          `Hello ${ta.name},
+
+Semester: ${semester}
 Start: ${formattedStart}
 Deadline: ${formattedEnd}
 
-Please submit your preferences before the deadline.`
-    )
-  )
-);
+Please submit your preferences.`
+        )
+      )
+    );
 
-// ✅ PARALLEL NOTIFICATIONS
-await Promise.all(
-  tas.rows.map(ta =>
-    notificationService.createSystemNotification(
-      ta.user_id,
-      "Preference Round Created",
-      `Semester: ${normalizedSemester}
+    // ✅ NOTIFICATIONS (parallel)
+    await Promise.all(
+      tas.rows.map(ta =>
+        notificationService.createSystemNotification(
+          ta.user_id,
+          "Preference Round Created",
+          `Semester: ${semester}
 Start: ${formattedStart}
 Deadline: ${formattedEnd}`,
-      "ROUND_OPENED",
-      round.id,
-      null
-    )
-  )
-);
+          "ROUND_OPENED",
+          round.id,
+          null
+        )
+      )
+    );
 
-    return { message: "Preference round opened successfully" };
+    // ✅ REMINDER
+    await notificationService.schedule15MinReminderIfNeeded(round);
+
+    console.log("✅ Background tasks finished");
+
+  } catch (err) {
+    console.error("❌ Background failed:", err.message);
   }
+}
+
+
+async openRound(startAt, endAt, userId, conflictResolutionMode, semester) {
+  if (new Date(startAt) >= new Date(endAt)) {
+    throw new Error("Start time must be before end time");
+  }
+
+  if (!["FAIRNESS", "PRIORITY"].includes(conflictResolutionMode)) {
+    throw new Error("Invalid conflict resolution mode");
+  }
+
+  const normalizedSemester = (semester || "").trim().toLowerCase();
+
+  if (!normalizedSemester) {
+    throw new Error("Semester is required");
+  }
+
+  const semesterExists = await db.query(`
+    SELECT 1 FROM course
+    WHERE LOWER(TRIM(semester)) = $1
+    LIMIT 1
+  `, [normalizedSemester]);
+
+  if (semesterExists.rows.length === 0) {
+    throw new Error("Selected semester does not exist in courses");
+  }
+
+  await this.autoLockIfNeeded();
+
+  const activeRound = await repo.getActiveUnlockedRound();
+  if (activeRound) {
+    throw new Error("Another active round exists");
+  }
+
+  const round = await repo.createRound(
+    startAt,
+    endAt,
+    userId,
+    conflictResolutionMode,
+    normalizedSemester
+  );
+
+  // ✅ MUST stay awaited
+  await repo.initializeSubmissionStatus(round.id);
+
+  // ✅ DO NOT await this
+  this.handleOpenRoundBackground(round, normalizedSemester, startAt, endAt);
+
+  return { message: "Preference round opened successfully" };
+}
 
   async getCurrentRound() {
     return await this.getReadableRound();
@@ -163,72 +178,54 @@ async getReadableRound() {
   return await repo.getLatestRound();
 }
 
-  async lockRound(userId = null, isAuto = false) {
-    const round = await repo.getLatestRound();
-
-    if (!round) {
-      throw new Error("No round exists");
-    }
-
-    if (round.is_locked) {
-      throw new Error("Round already locked");
-    }
-
-    await repo.lockRound(round.id, userId);
-
-    await db.query(`
-      UPDATE preference_submission_status
-      SET status = 'NON_SUBMITTER'
-      WHERE round_id = $1
-        AND status = 'NOT_SUBMITTED'
-    `, [round.id]);
-
+async handleLockRoundBackground(round, isAuto) {
+  try {
     const nonSubmitters = await db.query(`
-      SELECT   s.id, s.user_id, s.name, s.email
+      SELECT s.id, s.user_id, s.name, s.email
       FROM preference_submission_status pss
       JOIN staff s ON s.id = pss.staff_id
       WHERE pss.round_id = $1
         AND pss.status = 'NON_SUBMITTER'
     `, [round.id]);
 
-setImmediate(async () => {
-  for (const ta of nonSubmitters.rows) {
-    try {
-      const deadline = new Date(round.end_at).toLocaleString('en-GB', {
-        timeZone: 'Africa/Cairo',
-        dateStyle: 'medium',
-        timeStyle: 'short'
-      });
+    const deadline = new Date(round.end_at).toLocaleString('en-GB', {
+      timeZone: 'Africa/Cairo',
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
 
-      await emailService.sendEmail(
-        ta.email,
-        "Missed Preference Deadline",
-`Hello ${ta.name},
+    // ✅ EMAILS parallel
+    await Promise.all(
+      nonSubmitters.rows.map(ta =>
+        this.safeSendEmail(
+          ta.email,
+          "Missed Preference Deadline",
+          `Hello ${ta.name},
 
 Semester: ${round.semester}
 Deadline: ${deadline}
 
 You missed the submission.`
-      );
+        )
+      )
+    );
 
-      await notificationService.createSystemNotification(
-        ta.user_id,
-        "Preference Deadline Missed",
-        `Semester: ${round.semester}
+    // ✅ NOTIFICATIONS parallel
+    await Promise.all(
+      nonSubmitters.rows.map(ta =>
+        notificationService.createSystemNotification(
+          ta.user_id,
+          "Preference Deadline Missed",
+          `Semester: ${round.semester}
 Deadline: ${deadline}`,
-        "ROUND_MISSED_DEADLINE",
-        round.id,
-        null
-      );
+          "ROUND_MISSED_DEADLINE",
+          round.id,
+          null
+        )
+      )
+    );
 
-    } catch (err) {
-      console.error("❌ Failed missed:", ta.email, err.message);
-    }
-  }
-});
-
-
-
+    // ✅ SUMMARY (coordinator)
     const summary = await db.query(`
       SELECT
         COUNT(*) FILTER (WHERE status = 'SUBMITTED') AS submitted,
@@ -238,44 +235,42 @@ Deadline: ${deadline}`,
     `, [round.id]);
 
     const result = summary.rows[0];
+    const coordinator = await this.getCoordinatorUser();
 
-const coordinator = await this.getCoordinatorUser();
+    await this.safeSendEmail(
+      coordinator.email,
+      isAuto ? "Auto Locked" : "Round Summary",
+      `Submitted: ${result.submitted}
+Non-submitters: ${result.non_submitters}`
+    );
 
-await emailService.sendEmail(
-  coordinator.email,
-  isAuto ? "Preference Round Automatically Locked" : "Preference Round Summary",
-`The preference round has been locked successfully.
+    console.log("✅ Lock background done");
 
-Summary:
-Submitted TAs: ${result.submitted}
-Non-submitters: ${result.non_submitters}
-
-Please review the round outcome and proceed with the next planning steps as needed.`
-);
-
-const coordinatorRes = await db.query(`
-  SELECT id
-  FROM users
-  WHERE LOWER(role) = 'coordinator'
-  ORDER BY id
-  LIMIT 1
-`);
-
-if (coordinatorRes.rows.length > 0) {
-  const coordinatorUserId = coordinatorRes.rows[0].id;
-
-  await notificationService.createSystemNotification(
-    coordinatorUserId,
-    "Preference Round Summary",
-    `Round ${round.id} has ended. Submitted: ${result.submitted}. Non-submitters: ${result.non_submitters}.`,
-    "COORDINATOR_NOTICE",
-    round.id,
-    null
-  );
+  } catch (err) {
+    console.error("❌ Lock background failed:", err.message);
+  }
 }
 
-    return { message: "Round locked successfully" };
-  }
+async lockRound(userId = null, isAuto = false) {
+  const round = await repo.getLatestRound();
+
+  if (!round) throw new Error("No round exists");
+  if (round.is_locked) throw new Error("Round already locked");
+
+  await repo.lockRound(round.id, userId);
+
+  await db.query(`
+    UPDATE preference_submission_status
+    SET status = 'NON_SUBMITTER'
+    WHERE round_id = $1
+      AND status = 'NOT_SUBMITTED'
+  `, [round.id]);
+
+  // ✅ run background
+  this.handleLockRoundBackground(round, isAuto);
+
+  return { message: "Round locked successfully" };
+}
 
   async getSubmissionStatus(roundId) {
     if (!roundId) {
