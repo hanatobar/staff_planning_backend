@@ -1001,7 +1001,12 @@ course.taCount = courseStaffSets[course.courseId]
   : 0;
   }
 
-  const taValues = Object.values(taStats);
+
+
+  const taValues = Object.values(taStats).filter(t =>
+  t.assigned > 0 // ✅ include manually assigned
+  || t.ratio > 0 // ✅ includes submitted with assignments
+);
 
   const ratios = taValues.map(t => t.ratio);
   const assigneds = taValues.map(t => t.assigned);

@@ -27,13 +27,13 @@ async handleOpenRoundBackground(round, semester, startAt, endAt) {
       WHERE LOWER(TRIM(role)) IN ('ta', 'teaching assistant')
     `);
 
-    const formattedStart = new Date(startAt).toLocaleString('en-GB', {
+    const formattedStart = new Date(startAt).toLocaleString('en-US', {
       timeZone: 'Africa/Cairo',
       dateStyle: 'medium',
       timeStyle: 'short'
     });
 
-    const formattedEnd = new Date(endAt).toLocaleString('en-GB', {
+    const formattedEnd = new Date(endAt).toLocaleString('en-US', {
       timeZone: 'Africa/Cairo',
       dateStyle: 'medium',
       timeStyle: 'short'
