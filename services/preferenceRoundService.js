@@ -73,9 +73,12 @@ const formattedEnd = new Date(endAt).toLocaleString('en-GB', {
   timeStyle: 'short'
 });
 
-for (const ta of tas.rows) {
-  try {
-    const emailText = `Hello ${ta.name},
+setImmediate(() => {
+  console.log("🚀 Background job started: sending open round emails");
+
+  tas.rows.forEach(async (ta) => {
+    try {
+      const emailText = `Hello ${ta.name},
 
 A new preference round has been created.
 
@@ -83,36 +86,36 @@ Semester: ${normalizedSemester}
 Start: ${formattedStart}
 Deadline: ${formattedEnd}
 
-Please submit your preferences before the deadline.
+Please submit your preferences before the deadline.`;
 
-Regards,
-Staff Planning System`;
+      console.log("📧 Sending email to:", ta.email);
 
-    console.log("📧 Sending email to:", ta.email);
+      await emailService.sendEmail(
+        ta.email,
+        "Preference Round Opened",
+        emailText
+      );
 
-    await emailService.sendEmail(
-      ta.email,
-      "Preference Round Opened",
-      emailText
-    );
-
-    await notificationService.createSystemNotification(
-      ta.user_id,
-      "Preference Round Created",
-      `Semester: ${normalizedSemester}
+      await notificationService.createSystemNotification(
+        ta.user_id,
+        "Preference Round Created",
+        `Semester: ${normalizedSemester}
 Start: ${formattedStart}
 Deadline: ${formattedEnd}
 
 Submit before deadline.`,
-      "ROUND_OPENED",
-      round.id,
-      null
-    );
+        "ROUND_OPENED",
+        round.id,
+        null
+      );
 
-  } catch (err) {
-    console.error("❌ Failed for:", ta.email, err.message);
-  }
-}
+      console.log("✅ Done for:", ta.email);
+
+    } catch (err) {
+      console.error("❌ Failed for:", ta.email, err.message);
+    }
+  });
+});
 
     return { message: "Preference round opened successfully" };
   }
@@ -190,50 +193,51 @@ async getReadableRound() {
         AND pss.status = 'NON_SUBMITTER'
     `, [round.id]);
 
-for (const ta of nonSubmitters.rows) {
-  try {
-    const deadline = new Date(round.end_at).toLocaleString('en-GB', {
-      timeZone: 'Africa/Cairo',
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    });
+setImmediate(() => {
+  console.log("🚀 Sending missed deadline emails");
 
-    const emailText = `Hello ${ta.name},
+  nonSubmitters.rows.forEach(async (ta) => {
+    try {
+      const deadline = new Date(round.end_at).toLocaleString('en-GB', {
+        timeZone: 'Africa/Cairo',
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      });
+
+      console.log("📧 Sending missed email to:", ta.email);
+
+      await emailService.sendEmail(
+        ta.email,
+        "Missed Preference Deadline",
+`Hello ${ta.name},
 
 You did not submit your preferences before the deadline.
 
 Semester: ${round.semester}
 Deadline: ${deadline}
 
-You will be handled manually by the coordinator.
+You will be handled manually by the coordinator.`
+      );
 
-Regards,
-Staff Planning System`;
-
-    console.log("📧 Sending missed email to:", ta.email);
-
-    await emailService.sendEmail(
-      ta.email,
-      "Missed Preference Deadline",
-      emailText
-    );
-
-    await notificationService.createSystemNotification(
-      ta.user_id,
-      "Preference Deadline Missed",
-      `Semester: ${round.semester}
+      await notificationService.createSystemNotification(
+        ta.user_id,
+        "Preference Deadline Missed",
+        `Semester: ${round.semester}
 Deadline: ${deadline}
 
 You missed the submission.`,
-      "ROUND_MISSED_DEADLINE",
-      round.id,
-      null
-    );
+        "ROUND_MISSED_DEADLINE",
+        round.id,
+        null
+      );
 
-  } catch (err) {
-    console.error("❌ Failed missed email:", ta.email, err.message);
-  }
-}
+      console.log("✅ Missed processed:", ta.email);
+
+    } catch (err) {
+      console.error("❌ Failed missed:", ta.email, err.message);
+    }
+  });
+});
 
 
 
