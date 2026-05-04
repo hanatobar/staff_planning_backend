@@ -244,6 +244,42 @@ async resolveAppeal(req, res) {
   }
 }
 
+async transferAssignmentHours(req, res) {
+  try {
+    const { sourceAssignmentId, targetStaffId, hours } = req.body;
+
+    const result = await service.transferAssignmentHours(
+      sourceAssignmentId,
+      targetStaffId,
+      hours
+    );
+
+    res.json(result);
+
+  } catch (err) {
+    console.error("❌ TRANSFER ERROR:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async assignUncoveredHours(req, res) {
+  try {
+    const { targetStaffId, courseId, hours } = req.body;
+
+    const result = await service.assignUncoveredHours(
+      targetStaffId,
+      courseId,
+      hours
+    );
+
+    res.json(result);
+
+  } catch (err) {
+    console.error("❌ ASSIGN ERROR:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+}
+
 async getNonSubmitters(req, res) {
   try {
     const data = await service.getNonSubmitters();
