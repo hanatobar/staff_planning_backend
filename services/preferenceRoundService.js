@@ -51,50 +51,50 @@ const round = await repo.createRound(
       WHERE LOWER(role) = 'ta'
     `);
       
-const formattedEnd = new Date(endAt).toLocaleString('en-US', {
+const formattedStart = new Date(startAt).toLocaleString('en-GB', {
+  timeZone: 'Africa/Cairo',
   dateStyle: 'medium',
   timeStyle: 'short'
 });
 
-const formattedStart = new Date(startAt).toLocaleString('en-US', {
+const formattedEnd = new Date(endAt).toLocaleString('en-GB', {
+  timeZone: 'Africa/Cairo',
   dateStyle: 'medium',
   timeStyle: 'short'
 });
 
-for (const ta of tas.rows) {
-
-await emailService.sendEmail(
-  ta.email,
-  "Preference Round Opened",
+(async () => {
+  try {
+    await Promise.all(
+      tas.rows.map(async (ta) => {
+        await emailService.sendEmail(
+          ta.email,
+          "Preference Round Opened",
 `Hello ${ta.name},
 
-A new preference submission round is now available in the Staff Planning System test.
+A new preference submission round is now available.
 
 Semester: ${normalizedSemester}
 Start: ${formattedStart}
 Deadline: ${formattedEnd}
 
-Please review the available courses and submit your preferences before the deadline.
+Please submit before deadline.`
+        );
 
-Regards,
-Staff Planning System`
-);
-
-  // 🔥 NEW: NOTIFICATION
-  await notificationService.createSystemNotification(
-    ta.user_id,
-    "Preference Round Created",
-    `A new preference round has been created.
-Semester: ${normalizedSemester}
-Start: ${formattedStart}
-Deadline: ${formattedEnd}
-
-Please submit your preferences once the round starts and before the deadline.`,
-    "ROUND_OPENED",
-    round.id,
-    null
-  );
-}
+        await notificationService.createSystemNotification(
+          ta.user_id,
+          "Preference Round Created",
+          `A new preference round is available.`,
+          "ROUND_OPENED",
+          round.id,
+          null
+        );
+      })
+    );
+  } catch (err) {
+    console.error("Background email/notification error:", err);
+  }
+})();
 
     return { message: "Preference round opened successfully" };
   }
