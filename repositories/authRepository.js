@@ -86,14 +86,15 @@ async function deleteCoordinatorReferences(userId) {
     WHERE reviewed_by_user_id = $1
   `, [userId]);
 }
-async function deleteNotificationsByRecipientUserId(client, userId) {
-  await client.query(`
+async function deleteNotificationsByRecipientUserId(userId) {
+  await pool.query(`
     DELETE FROM notification
     WHERE recipient_user_id = $1 
   `, [userId]);
 }
-async function deleteMessagesByUserId(client,userId) {
-  await client.query(`
+
+async function deleteMessagesByUserId(userId) {
+  await pool.query(`
     DELETE FROM message
     WHERE sender_user_id = $1 OR receiver_user_id = $1
   `, [userId]);
