@@ -218,6 +218,29 @@ app.get("/auth/coordinator", async (req, res) => {
   }
 });
 
+app.post("/auth/coordinator", async (req, res) => {
+  try {
+    const { name, email } = req.body;
+
+    const result = await authService.createCoordinator(name, email);
+
+    res.json(result);
+  } catch (err) {
+    console.error("CREATE COORDINATOR ERROR:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete("/auth/coordinator", async (req, res) => {
+  try {
+    const result = await authService.deleteCoordinator();
+    res.json(result);
+  } catch (err) {
+    console.error("DELETE COORDINATOR ERROR:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 app.post("/auth/set-initial-password", async (req, res) => {
   const { email, password } = req.body;
 
