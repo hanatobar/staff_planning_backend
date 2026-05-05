@@ -273,7 +273,7 @@ async function deleteStaff(id) {
       [id]
     );
 
-    if (userId != null && userId !== "") {
+    if (userId != null ) {
       await client.query(
         `DELETE FROM users WHERE id = $1`,
         [userId]
@@ -291,6 +291,7 @@ async function deleteStaff(id) {
 
     await client.query("COMMIT");
   } catch (error) {
+    console.error("❌ DELETE STAFF ERROR:", error);
     await client.query("ROLLBACK");
     throw error;
   } finally {
