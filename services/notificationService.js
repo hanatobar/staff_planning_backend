@@ -1,5 +1,6 @@
 const repo = require("../repositories/notificationRepository");
 const emailService = require("./emailService");
+const db = require("../db/database");
 
 class NotificationService {
 async getNotificationsByUser(userId) {
@@ -81,23 +82,64 @@ async getNotificationsByUser(userId) {
 
 
 
-  async schedule15MinReminderIfNeeded(round) {
-    const start = new Date(round.start_at);
-    const end = new Date(round.end_at);
-    const durationMs = end - start;
+schedule15MinReminderIfNeeded(round) {
+  const now = new Date();
+  const end = new Date(round.end_at);
 
-    if (durationMs <= 15 * 60 * 1000) {
-      return;
-    }
+  const reminderTime = new Date(end.getTime() - 15 * 60 * 1000);
 
-    const reminderAt = new Date(end.getTime() - 15 * 60 * 1000);
+  const delay = reminderTime.getTime() - now.getTime();
 
-    await repo.createSchedule(
-      round.id,
-      "ROUND_REMINDER_15_MIN",
-      reminderAt
-    );
+  console.log("⏳ Scheduling reminder in ms:", delay);
+
+  // ❌ if already past → skip
+  if (delay <= 0) {
+    console.log("⚠️ Reminder time already passed");
+    return;
   }
+
+  setTimeout(async () => {
+    try {
+      console.log("🚀 Sending 15-min reminder...");
+
+      const tas = await db.query(`
+        SELECT id, user_id, name, email
+        FROM staff
+        WHERE LOWER(role) = 'ta'
+      `);
+
+      await Promise.all(
+        tas.rows.map(async (ta) => {
+          await Promise.all([
+            emailService.sendEmail(
+              ta.email,
+              "Reminder: Preference Round Ending Soon",
+              `Hello ${ta.name},
+
+The preference round will end in 15 minutes.
+
+Please submit your preferences before the deadline.`
+            ),
+
+            notificationService.createSystemNotification(
+              ta.user_id,
+              "Reminder: Round Ending Soon",
+              "15 minutes remaining to submit preferences",
+              "ROUND_REMINDER",
+              round.id,
+              null
+            )
+          ]);
+        })
+      );
+
+      console.log("✅ Reminder sent successfully");
+
+    } catch (err) {
+      console.error("❌ Reminder failed:", err.message);
+    }
+  }, delay);
+}
 
   async processPendingSchedules() {
     const schedules = await repo.getPendingSchedules();
