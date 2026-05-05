@@ -202,7 +202,7 @@ async function deleteCoordinator() {
 
     await client.query(`
       DELETE FROM notification
-      WHERE recipient_user_id = $1 OR sender_user_id = $1
+      WHERE recipient_user_id = $1 
     `, [userId]);
 
     await client.query(`
