@@ -382,7 +382,7 @@ async function updateTaPriorityOrder(staffIds) {
   const client = await db.connect();
 
   try {
-    console.log("🔥 RECEIVED IDS:", staffIds);
+    
 
     await client.query("BEGIN");
 
@@ -390,13 +390,11 @@ async function updateTaPriorityOrder(staffIds) {
 
     await client.query("COMMIT");
 
-    console.log("✅ PRIORITY SAVED");
-
     return { message: "Priority updated successfully" };
 
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error("❌ PRIORITY UPDATE ERROR:", err);
+    
 throw err;
 
   } finally {
