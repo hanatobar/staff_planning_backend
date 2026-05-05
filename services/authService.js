@@ -196,14 +196,48 @@ async function deleteCoordinator() {
   try {
     await client.query("BEGIN");
 
-    // 🔥 pass client to repository methods
-    await authRepository.deleteCoordinatorReferences(client, coordinator.id);
-    await authRepository.deleteNotificationsByRecipientUserId(client, coordinator.id);
-    await authRepository.deleteMessagesByUserId(client, coordinator.id);
+    const userId = coordinator.id;
 
+    // 🔥 DELETE ALL POSSIBLE REFERENCES
+
+    await client.query(`
+      DELETE FROM notification
+      WHERE recipient_user_id = $1 OR sender_user_id = $1
+    `, [userId]);
+
+    await client.query(`
+      DELETE FROM message
+      WHERE sender_user_id = $1 OR receiver_user_id = $1
+    `, [userId]);
+
+    await client.query(`
+      UPDATE assignment
+      SET approved_by_user_id = NULL
+      WHERE approved_by_user_id = $1
+    `, [userId]);
+
+    await client.query(`
+      UPDATE assignment_appeal
+      SET reviewed_by_user_id = NULL
+      WHERE reviewed_by_user_id = $1
+    `, [userId]);
+
+    await client.query(`
+      UPDATE preference_round
+      SET opened_by_user_id = NULL
+      WHERE opened_by_user_id = $1
+    `, [userId]);
+
+    await client.query(`
+      UPDATE preference_round
+      SET locked_by_user_id = NULL
+      WHERE locked_by_user_id = $1
+    `, [userId]);
+
+    // 🔥 NOW DELETE USER
     const result = await client.query(
       `DELETE FROM users WHERE id = $1 RETURNING id`,
-      [coordinator.id]
+      [userId]
     );
 
     if (result.rows.length === 0) {
@@ -218,8 +252,8 @@ async function deleteCoordinator() {
     };
 
   } catch (err) {
-    console.error("❌ DELETE COORDINATOR ERROR:", err);
     await client.query("ROLLBACK");
+    console.error("❌ DELETE ERROR:", err.message);
     throw err;
   } finally {
     client.release();
