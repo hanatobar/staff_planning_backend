@@ -67,35 +67,24 @@ async function updateUserById(id, name, email, role) {
   return result.rows[0];
 }
 
-async function deleteCoordinatorReferences(client, userId) {
-
-  // existing
-  await client.query(`
+async function deleteCoordinatorReferences(userId) {
+  await pool.query(`
     UPDATE preference_round
     SET opened_by_user_id = NULL
     WHERE opened_by_user_id = $1
   `, [userId]);
 
-  await client.query(`
+  await pool.query(`
     UPDATE preference_round
     SET locked_by_user_id = NULL
     WHERE locked_by_user_id = $1
   `, [userId]);
 
-  await client.query(`
+  await pool.query(`
     UPDATE assignment_appeal
     SET reviewed_by_user_id = NULL
     WHERE reviewed_by_user_id = $1
   `, [userId]);
-
-  // 🔥 ADD THIS (VERY IMPORTANT)
-
-  await client.query(`
-    UPDATE assignment
-    SET approved_by_user_id = NULL
-    WHERE approved_by_user_id = $1
-  `, [userId]);
-
 }
 async function deleteNotificationsByRecipientUserId(client, userId) {
   await client.query(`
