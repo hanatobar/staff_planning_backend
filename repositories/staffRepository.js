@@ -109,7 +109,7 @@ async updateTaPriorityOrder(client, staffIds) {
       `
       UPDATE staff
       SET priority_rank = $1
-      WHERE id = $2
+      WHERE user_id = $2
       RETURNING id
       `,
       [priority, id]
