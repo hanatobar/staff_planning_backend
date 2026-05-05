@@ -68,16 +68,37 @@ async getNotificationsByUser(userId) {
     return { message: "Notification sent to selected users" };
   }
 
-  async createSystemNotification(recipientUserId, title, body, type, roundId = null, assignmentId = null) {
-    return await repo.createNotification(
+async createSystemNotification(
+  recipientUserId,
+  title,
+  message,
+  type,
+  referenceId,
+  senderUserId = null
+) {
+  try {
+    console.log("📥 INSERT NOTIFICATION:", {
       recipientUserId,
       title,
-      body,
-      type,
-      roundId,
-      assignmentId
+      type
+    });
+
+    await db.query(
+      `
+      INSERT INTO notification
+      (recipient_user_id, title, message, type, reference_id, sender_user_id, is_read, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, FALSE, NOW())
+      `,
+      [recipientUserId, title, message, type, referenceId, senderUserId]
     );
+
+    console.log("✅ Notification inserted for:", recipientUserId);
+
+  } catch (err) {
+    console.error("❌ Notification INSERT FAILED:", err.message);
+    throw err;
   }
+}
 
 
 
@@ -87,12 +108,10 @@ schedule15MinReminderIfNeeded(round) {
   const end = new Date(round.end_at);
 
   const reminderTime = new Date(end.getTime() - 15 * 60 * 1000);
-
   const delay = reminderTime.getTime() - now.getTime();
 
-  console.log("⏳ Scheduling reminder in ms:", delay);
+  console.log("⏳ Reminder delay:", delay);
 
-  // ❌ if already past → skip
   if (delay <= 0) {
     console.log("⚠️ Reminder time already passed");
     return;
@@ -110,18 +129,21 @@ schedule15MinReminderIfNeeded(round) {
 
       await Promise.all(
         tas.rows.map(async (ta) => {
+          console.log("🔔 Sending to user:", ta.user_id);
+
           await Promise.all([
+            // ✅ EMAIL
             emailService.sendEmail(
               ta.email,
               "Reminder: Preference Round Ending Soon",
               `Hello ${ta.name},
 
 The preference round will end in 15 minutes.
-
-Please submit your preferences before the deadline.`
+Please submit your preferences.`
             ),
 
-            notificationService.createSystemNotification(
+            // ✅ NOTIFICATION (FIXED)
+            this.createSystemNotification(
               ta.user_id,
               "Reminder: Round Ending Soon",
               "15 minutes remaining to submit preferences",
