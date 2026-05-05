@@ -103,6 +103,8 @@ async updateTaPriorityOrder(client, staffIds) {
     const id = Number(staffIds[i]);
     const priority = i + 1;
 
+    console.log("DB UPDATE:", { id, priority });
+
     const result = await client.query(
       `
       UPDATE staff

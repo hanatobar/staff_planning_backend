@@ -388,21 +388,25 @@ async function updateTaPriorityOrder(staffIds) {
   const client = await db.connect();
 
   try {
-    
-
     await client.query("BEGIN");
 
-    await staffRepository.updateTaPriorityOrder(client, staffIds);
+    // 🔥 Convert safely
+    const incomingIds = staffIds.map(id => Number(id));
+
+    console.log("🔥 INCOMING IDS:", incomingIds);
+
+    // ❌ REMOVE strict validation (this was breaking it)
+
+    await staffRepository.updateTaPriorityOrder(client, incomingIds);
 
     await client.query("COMMIT");
 
-    return { message: "Priority updated successfully" };
+    return { message: "TA priority updated successfully" };
 
-  } catch (err) {
+  } catch (error) {
     await client.query("ROLLBACK");
-    
-throw err;
-
+    console.error("❌ SERVICE ERROR:", error);
+    throw error;
   } finally {
     client.release();
   }
