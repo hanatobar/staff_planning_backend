@@ -78,7 +78,9 @@ Please log in using this password. After login, you will be redirected to set a 
 
 Best regards,
 Staff Planning System`
-    );
+    ).catch(err => {
+  console.error("Email async error:", err);
+});
 
     return {
       message: "TA added successfully and default password email sent"
@@ -290,6 +292,9 @@ async function deleteStaff(id) {
     }
 
     await client.query("COMMIT");
+    return {
+  message: "Staff deleted successfully"
+};
   } catch (error) {
     console.error("❌ DELETE STAFF ERROR:", error);
     await client.query("ROLLBACK");

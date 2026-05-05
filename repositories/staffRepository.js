@@ -40,12 +40,7 @@ async getAllStaff() {
   return result.rows;
 }
 
-  async deleteStaff(id) {
-    await db.query(`
-      DELETE FROM staff
-      WHERE id = $1
-    `, [id]);
-  }
+
 
   async getStaffById(id) {
     const result = await db.query(`

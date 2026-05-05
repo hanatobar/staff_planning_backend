@@ -14,7 +14,7 @@ class StaffHttpController {
         priorityRank
       );
 
-      res.json({ message: result.message || "Staff added successfully" });
+      res.json({ message: result?.message || "Staff added successfully" });
 
     } catch (err) {
       res.status(500).json({ error: err.message });
