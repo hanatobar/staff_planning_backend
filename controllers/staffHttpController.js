@@ -116,7 +116,6 @@ async updateTaPriorityOrder(req, res) {
 
     console.log("✅ FINAL CLEAN IDS:", cleanIds);
 
-    // 🔥 5. Call service with CLEAN data only
     const result = await service.updateTaPriorityOrder(cleanIds);
 
     return res.json(result);

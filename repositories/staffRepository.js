@@ -100,41 +100,22 @@ async getAllStaff() {
 
 async updateTaPriorityOrder(client, staffIds) {
   for (let i = 0; i < staffIds.length; i++) {
-    const rawId = staffIds[i];
-
-    // 🔥 HARD VALIDATION
-    if (rawId === null || rawId === undefined) {
-      throw new Error(`ID is null at index ${i}`);
-    }
-
-    const id = Number(rawId);
-
-    if (!Number.isInteger(id)) {
-      throw new Error(`Invalid ID at index ${i}: ${rawId}`);
-    }
-
+    const id = Number(staffIds[i]);
     const priority = i + 1;
 
-    if (!Number.isInteger(priority)) {
-      throw new Error(`Invalid priority at index ${i}`);
-    }
-
-    console.log("DB UPDATE:", {
-      id,
-      priority,
-      typeofId: typeof id,
-      typeofPriority: typeof priority
-    });
-
-    await client.query(
+    const result = await client.query(
       `
       UPDATE staff
       SET priority_rank = $1
-      WHERE id = $2 
-      AND LOWER(role) = 'ta'
+      WHERE id = $2
+      RETURNING id
       `,
       [priority, id]
     );
+
+    if (result.rowCount === 0) {
+      throw new Error(`Staff not found for ID: ${id}`);
+    }
   }
 }
 }
