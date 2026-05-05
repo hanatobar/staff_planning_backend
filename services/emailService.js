@@ -1,40 +1,20 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require('resend');
 
 class EmailService {
   constructor() {
-this.transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  family: 4,
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-    this.transporter.verify((error) => {
-      if (error) {
-        console.error("❌ Email transporter error:", error);
-      } else {
-        console.log("✅ Email server is ready");
-      }
-    });
+    this.resend = new Resend(process.env.RESEND_API_KEY);
   }
 
   async sendEmail(to, subject, text) {
     try {
-      const info = await this.transporter.sendMail({
-        from: `Staff Planning System <${process.env.EMAIL_USER}>`,
+      const response = await this.resend.emails.send({
+        from: 'onboarding@resend.dev', // or your domain later
         to,
         subject,
         text,
       });
 
-      console.log("✅ Email sent:", info.response);
+      console.log("✅ Email sent:", response);
     } catch (error) {
       console.error("❌ Email FAILED:", error);
     }
