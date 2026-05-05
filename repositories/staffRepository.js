@@ -100,10 +100,23 @@ async getAllStaff() {
 
 async updateTaPriorityOrder(client, staffIds) {
   for (let i = 0; i < staffIds.length; i++) {
-    const id = Number(staffIds[i]);
+    const rawId = staffIds[i];
+
+    console.log("RAW ID:", rawId, "TYPE:", typeof rawId);
+
+    if (rawId === null || rawId === undefined) {
+      throw new Error(`❌ ID is null at index ${i}`);
+    }
+
+    const id = Number(rawId);
+
+    if (Number.isNaN(id)) {
+      throw new Error(`❌ NaN detected at index ${i}: ${rawId}`);
+    }
+
     const priority = i + 1;
 
-    console.log("DB UPDATE:", { id, priority });
+    console.log("UPDATING:", { id, priority });
 
     const result = await client.query(
       `
@@ -116,7 +129,7 @@ async updateTaPriorityOrder(client, staffIds) {
     );
 
     if (result.rowCount === 0) {
-      throw new Error(`Staff not found for ID: ${id}`);
+      throw new Error(`❌ No staff found for user_id: ${id}`);
     }
   }
 }

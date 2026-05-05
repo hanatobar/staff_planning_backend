@@ -390,14 +390,9 @@ async function updateTaPriorityOrder(staffIds) {
   try {
     await client.query("BEGIN");
 
-    // 🔥 Convert safely
-    const incomingIds = staffIds.map(id => Number(id));
+    console.log("🔥 SERVICE RECEIVED IDS:", staffIds);
 
-    console.log("🔥 INCOMING IDS:", incomingIds);
-
-    // ❌ REMOVE strict validation (this was breaking it)
-
-    await staffRepository.updateTaPriorityOrder(client, incomingIds);
+    await staffRepository.updateTaPriorityOrder(client, staffIds);
 
     await client.query("COMMIT");
 
