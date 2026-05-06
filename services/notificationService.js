@@ -68,34 +68,15 @@ async getNotificationsByUser(userId) {
     return { message: "Notification sent to selected users" };
   }
 
-async createSystemNotification(
-  recipientUserId,
-  title,
-  body,
-  type,
-  roundId = null,
-  assignmentId = null
-) {
-  try {
-    console.log("🔔 Creating notification for:", recipientUserId);
-
-    const result = await repo.createNotification(
-      recipientUserId,
-      title,
-      body,
-      type,
-      roundId,
-      assignmentId
-    );
-
-    console.log("✅ Notification created");
-
-    return result;
-
-  } catch (err) {
-    console.error("❌ Notification failed:", err.message);
-    throw err;
-  }
+async createSystemNotification(recipientUserId, title, body, type, roundId = null, assignmentId = null) {
+  return await repo.createNotification(
+    recipientUserId,
+    title,
+    body,
+    type,
+    roundId,
+    assignmentId
+  );
 }
 
 
