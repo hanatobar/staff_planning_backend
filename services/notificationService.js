@@ -71,35 +71,32 @@ async getNotificationsByUser(userId) {
 async createSystemNotification(
   recipientUserId,
   title,
-  message,
+  body,
   type,
-  referenceId,
-  senderUserId = null
+  roundId = null,
+  assignmentId = null
 ) {
   try {
-    console.log("📥 INSERT NOTIFICATION:", {
+    console.log("🔔 Creating notification for:", recipientUserId);
+
+    const result = await repo.createNotification(
       recipientUserId,
       title,
-      type
-    });
-
-    await db.query(
-      `
-      INSERT INTO notification
-      (recipient_user_id, title, message, type, reference_id, sender_user_id, is_read, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, FALSE, NOW())
-      `,
-      [recipientUserId, title, message, type, referenceId, senderUserId]
+      body,
+      type,
+      roundId,
+      assignmentId
     );
 
-    console.log("✅ Notification inserted for:", recipientUserId);
+    console.log("✅ Notification created");
+
+    return result;
 
   } catch (err) {
-    console.error("❌ Notification INSERT FAILED:", err.message);
+    console.error("❌ Notification failed:", err.message);
     throw err;
   }
 }
-
 
 
 
@@ -127,33 +124,33 @@ schedule15MinReminderIfNeeded(round) {
         WHERE LOWER(role) = 'ta'
       `);
 
-      await Promise.all(
-        tas.rows.map(async (ta) => {
-          console.log("🔔 Sending to user:", ta.user_id);
+await Promise.all(
+  tas.rows.map(async (ta) => {
+    console.log("🔔 Sending to user:", ta.user_id);
 
-          await Promise.all([
-            // ✅ EMAIL
-            emailService.sendEmail(
-              ta.email,
-              "Reminder: Preference Round Ending Soon",
-              `Hello ${ta.name},
+    await Promise.all([
+      // ✅ EMAIL
+      emailService.sendEmail(
+        ta.email,
+        "Reminder: Preference Round Ending Soon",
+        `Hello ${ta.name},
 
 The preference round will end in 15 minutes.
 Please submit your preferences.`
-            ),
+      ),
 
-            // ✅ NOTIFICATION (FIXED)
-            this.createSystemNotification(
-              ta.user_id,
-              "Reminder: Round Ending Soon",
-              "15 minutes remaining to submit preferences",
-              "ROUND_REMINDER",
-              round.id,
-              null
-            )
-          ]);
-        })
-      );
+      // ✅ NOTIFICATION (FIXED)
+      await this.createSystemNotification(   // 🔥 IMPORTANT: await here
+        ta.user_id,
+        "Reminder: Round Ending Soon",
+        "15 minutes remaining to submit preferences",
+        "ROUND_REMINDER",
+        round.id,
+        null
+      )
+    ]);
+  })
+);
 
       console.log("✅ Reminder sent successfully");
 
