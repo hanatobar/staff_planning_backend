@@ -4,7 +4,7 @@ class NotificationRepository {
 async createNotification(recipientUserId, title, body, type, roundId = null, assignmentId = null) {
   const result = await db.query(`
     INSERT INTO notification
-    (recipient_user_id, title, message, type, round_id, assignment_id, is_read, created_at)
+    (recipient_user_id, title, body, type, round_id, assignment_id, is_read, created_at)
     VALUES ($1, $2, $3, $4, $5, $6, FALSE, NOW())
     RETURNING *
   `, [recipientUserId, title, body, type, roundId, assignmentId]);
