@@ -310,9 +310,9 @@ const staffHttpController = require("./controllers/staffHttpController");
 
 app.post("/staff", (req, res) => staffHttpController.addStaff(req, res));
 app.get("/staff", (req, res) => staffHttpController.getAllStaff(req, res));
+app.put("/staff/priority", (req, res) => staffHttpController.updateTaPriorityOrder(req, res));
 app.delete("/staff/:id", (req, res) => staffHttpController.deleteStaff(req, res));
 app.put("/staff/:id", (req, res) => staffHttpController.updateStaff(req, res));
-app.put("/staff/priority", (req, res) => staffHttpController.updateTaPriorityOrder(req, res));
 
 const messageHttpController = require("./controllers/messageHttpController");
 
