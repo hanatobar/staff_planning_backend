@@ -99,39 +99,57 @@ async getAllStaff() {
   }
 
 async updateTaPriorityOrder(client, staffIds) {
-  for (let i = 0; i < staffIds.length; i++) {
-    const rawId = staffIds[i];
-
+  const cleanIds = staffIds.map((rawId, index) => {
     console.log("RAW ID:", rawId, "TYPE:", typeof rawId);
 
     if (rawId === null || rawId === undefined) {
-      throw new Error(`❌ ID is null at index ${i}`);
+      throw new Error(`ID is null at index ${index}`);
     }
 
     const id = Number(rawId);
 
-    if (Number.isNaN(id)) {
-      throw new Error(`❌ NaN detected at index ${i}: ${rawId}`);
+    if (!Number.isFinite(id) || !Number.isInteger(id)) {
+      throw new Error(`Invalid ID at index ${index}: ${rawId}`);
     }
 
-    const priority = i + 1;
+    return id;
+  });
 
-    console.log("UPDATING:", { id, priority });
+  const existing = await client.query(
+    `
+    SELECT user_id
+    FROM staff
+    WHERE LOWER(role) = 'ta'
+      AND user_id = ANY($1::int[])
+    `,
+    [cleanIds]
+  );
 
-    const result = await client.query(
-      `
-      UPDATE staff
-      SET priority_rank = $1
-      WHERE user_id = $2
-      RETURNING id
-      `,
-      [priority, id]
-    );
-
-    if (result.rowCount === 0) {
-      throw new Error(`❌ No staff found for user_id: ${id}`);
-    }
+  if (existing.rowCount !== cleanIds.length) {
+    const foundIds = new Set(existing.rows.map((row) => Number(row.user_id)));
+    const missingIds = cleanIds.filter((id) => !foundIds.has(id));
+    throw new Error(`No staff found for user_id: ${missingIds.join(", ")}`);
   }
+
+  await client.query(
+    `
+    UPDATE staff
+    SET priority_rank = -array_position($1::int[], user_id)
+    WHERE LOWER(role) = 'ta'
+      AND user_id = ANY($1::int[])
+    `,
+    [cleanIds]
+  );
+
+  await client.query(
+    `
+    UPDATE staff
+    SET priority_rank = array_position($1::int[], user_id)
+    WHERE LOWER(role) = 'ta'
+      AND user_id = ANY($1::int[])
+    `,
+    [cleanIds]
+  );
 }
 }
 
