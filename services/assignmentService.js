@@ -171,20 +171,20 @@ for (const p of preferences) {
   .map(p => taMap[p.staffId])
   .filter(ta => ta && ta.remaining > 0);
 
-// apply domination protection only for larger courses
-if (course.requiredHours > 3) {
+// apply domination protection to prevent one TA from taking too many hours
+// when multiple TAs prefer the same course
+if (eligible.length > 1) {
+  const fairShare = Math.ceil(course.requiredHours / eligible.length);
+  const maxPerTA = Math.max(fairShare, 1);
 
   eligible = eligible.filter(ta => {
-
     const currentCourseHours =
       Number(
         assignmentMap[`${ta.id}-${courseId}`]?.hours || 0
       );
 
-    return currentCourseHours <
-      Math.ceil(course.requiredHours * 0.7);
+    return currentCourseHours < maxPerTA;
   });
-
 }
 
 // prevent one TA from dominating too early
