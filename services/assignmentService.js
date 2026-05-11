@@ -1572,13 +1572,7 @@ async resolveAppeal(
           );
         }
 
-        await repo.insertAppealCompensation(
-  appeal.id,
-  "UNCOVERED",
-  courseId,
-  null,
-  hours
-);
+
       } else if (sourceType === "TRANSFER") {
         const sourceAssignmentId = Number(item.sourceAssignmentId);
 
@@ -1625,13 +1619,7 @@ async resolveAppeal(
           hours
         );
 
-        await repo.insertAppealCompensation(
-  appeal.id,
-  "TRANSFER",
-  null,
-  sourceAssignmentId,
-  hours
-);
+
 
         if (Number(updatedTransferSource.assigned_hours) === 0) {
           await repo.deleteAssignment(transferSource.id);
@@ -1642,7 +1630,28 @@ async resolveAppeal(
     }
   }
 
+if (Array.isArray(compensations)) {
 
+  for (const item of compensations) {
+
+    const sourceType =
+      String(item.sourceType || "").toUpperCase();
+
+    const hours = Number(item.hours);
+
+    await repo.insertAppealCompensation(
+      appeal.id,
+      sourceType,
+      sourceType === "UNCOVERED"
+        ? Number(item.courseId)
+        : null,
+      sourceType === "TRANSFER"
+        ? Number(item.sourceAssignmentId)
+        : null,
+      hours
+    );
+  }
+}
 
   const staffRes = await db.query(`
     SELECT user_id
