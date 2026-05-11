@@ -292,9 +292,9 @@ this.rebalanceAssignmentsForFairness(
   assignmentMap,
   taMap,
   preferenceLookup,
-  2,
+  1,
   protectedAssignments,
-  1
+  2
 );
 
 for (const key of Object.keys(assignmentMap)) {
@@ -365,7 +365,7 @@ sortEligibleTAs(eligible, mode, options = {}) {
 
     // better preference fairness balance
     const priorityWeight =
-      mode === "PRIORITY" ? 0.55 : 0.15;
+      mode === "PRIORITY" ? 0.4 : 0.05;
 
     const fairnessWeight = 1 - priorityWeight;
 
