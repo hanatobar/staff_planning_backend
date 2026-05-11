@@ -1297,14 +1297,18 @@ const body =
     ? `Your appeal has been ${status.toLowerCase()}. Coordinator response: ${coordinatorResponse}`
     : `Your appeal has been ${status.toLowerCase()}.`;
 
-await notificationService.createSystemNotification(
-  Number(staffRes.rows[0].user_id),
-  title,
-  body,
-  "APPEAL_REVIEWED",
-  appeal.round_id,
-  appeal.assignment_id
-);
+try {
+  await notificationService.createSystemNotification(
+    Number(staffRes.rows[0].user_id),
+    title,
+    body,
+    "APPEAL_REVIEWED",
+    appeal.round_id,
+    appeal.assignment_id
+  );
+} catch (err) {
+  console.error("APPEAL REVIEW NOTIFICATION ERROR:", err);
+}
   }
 
   return {
@@ -1630,14 +1634,18 @@ const body =
   coordinatorResponse && coordinatorResponse.trim()
     ? `Your appeal has been approved. Compensation: ${compensationSummary}. Coordinator response: ${coordinatorResponse}`
     : `Your appeal has been approved. Compensation: ${compensationSummary}`;
-    await notificationService.createSystemNotification(
-      Number(staffRes.rows[0].user_id),
-      title,
-      body,
-      "APPEAL_REVIEWED",
-      appeal.round_id,
-      sourceAssignmentDeleted ? null : appeal.assignment_id
-    );
+    try {
+      await notificationService.createSystemNotification(
+        Number(staffRes.rows[0].user_id),
+        title,
+        body,
+        "APPEAL_REVIEWED",
+        appeal.round_id,
+        sourceAssignmentDeleted ? null : appeal.assignment_id
+      );
+    } catch (err) {
+      console.error("APPEAL RESOLUTION NOTIFICATION ERROR:", err);
+    }
   }
   await repo.deleteZeroHourAssignmentsByRound(round.id);
   return { message: "Appeal resolved successfully" };
