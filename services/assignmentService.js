@@ -171,6 +171,18 @@ let eligible = levelPrefs
   .map(p => taMap[p.staffId])
   .filter(ta => ta && ta.remaining > 0);
 
+eligible = eligible.filter(ta => {
+
+  const currentCourseHours =
+    Number(
+      assignmentMap[`${ta.id}-${courseId}`]?.hours || 0
+    );
+
+  // prevent domination of same course
+  return currentCourseHours <
+    Math.ceil(course.requiredHours * 0.6);
+});
+
 // prevent one TA from dominating too early
 const filteredEligible = eligible.filter((ta) => {
   const loadRatio =
@@ -203,14 +215,7 @@ if (conflict && conflict.chosenStaffId === null) {
   conflict.chosenStaffId = eligible[0].id;
 }
 
-if (conflict && conflict.chosenStaffId !== null) {
-  eligible = this.orderConflictEligibleTAs(
-    eligible,
-    assignmentMap,
-    courseId,
-    conflict
-  );
-}
+
 
 const chosenTa = eligible[0];
 
@@ -281,8 +286,9 @@ this.rebalanceAssignmentsForFairness(
   assignmentMap,
   taMap,
   preferenceLookup,
-  1,
-  protectedAssignments
+  2,
+  protectedAssignments,
+  1
 );
 
 for (const key of Object.keys(assignmentMap)) {
@@ -340,26 +346,43 @@ sortEligibleTAs(eligible, mode, options = {}) {
   const { allowRandomTieBreak = false } = options;
 
   eligible.sort((a, b) => {
-    // FAIRNESS ratio
-    const ratioA = a.maxWorkload === 0 ? 1 : a.assignedHours / a.maxWorkload;
-    const ratioB = b.maxWorkload === 0 ? 1 : b.assignedHours / b.maxWorkload;
 
-    // 🔥 HYBRID SCORE
-    const priorityWeight = mode === "PRIORITY" ? 0.6 : 0.2;
+    const ratioA =
+      a.maxWorkload === 0
+        ? 1
+        : a.assignedHours / a.maxWorkload;
+
+    const ratioB =
+      b.maxWorkload === 0
+        ? 1
+        : b.assignedHours / b.maxWorkload;
+
+    // better preference fairness balance
+    const priorityWeight =
+      mode === "PRIORITY" ? 0.55 : 0.15;
+
     const fairnessWeight = 1 - priorityWeight;
 
+    const normalizedPriorityA =
+      1 / Math.max((a.priorityRank || 999), 1);
+
+    const normalizedPriorityB =
+      1 / Math.max((b.priorityRank || 999), 1);
+
     const scoreA =
-      (a.priorityRank || 999) * priorityWeight +
+      normalizedPriorityA * priorityWeight -
       ratioA * fairnessWeight;
 
     const scoreB =
-      (b.priorityRank || 999) * priorityWeight +
+      normalizedPriorityB * priorityWeight -
       ratioB * fairnessWeight;
 
+    // higher score first
     if (scoreA !== scoreB) {
-      return scoreA - scoreB;
+      return scoreB - scoreA;
     }
 
+    // fewer assigned hours
     if (a.assignedHours !== b.assignedHours) {
       return a.assignedHours - b.assignedHours;
     }
@@ -374,34 +397,6 @@ sortEligibleTAs(eligible, mode, options = {}) {
   return eligible;
 }
 
-orderConflictEligibleTAs(eligible, assignmentMap, courseId, conflict) {
-  const winnerId = Number(conflict.chosenStaffId);
-
-  eligible.sort((a, b) => {
-    const aCourseHours = Number(assignmentMap[`${a.id}-${courseId}`]?.hours || 0);
-    const bCourseHours = Number(assignmentMap[`${b.id}-${courseId}`]?.hours || 0);
-
-    if (aCourseHours !== bCourseHours) {
-      return aCourseHours - bCourseHours;
-    }
-
-    if (Number(a.id) === winnerId && Number(b.id) !== winnerId) {
-      return -1;
-    }
-
-    if (Number(b.id) === winnerId && Number(a.id) !== winnerId) {
-      return 1;
-    }
-
-    if (a.assignedHours !== b.assignedHours) {
-      return a.assignedHours - b.assignedHours;
-    }
-
-    return a.id - b.id;
-  });
-
-  return eligible;
-}
 
 rebalanceAssignmentsForFairness(
   assignmentMap,
