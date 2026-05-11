@@ -1385,11 +1385,7 @@ async resolveAppeal(
   compensations
 ) {
 
-  const client = await db.connect();
 
-  try {
-
-    await client.query("BEGIN");
 
     const round = await roundService.getCurrentRound();
 
@@ -1465,6 +1461,12 @@ async resolveAppeal(
       throw new Error(`Target TA ${targetStaffId} would exceed max workload`);
     }
   }
+  await repo.reviewAppeal(
+  appeal.id,
+  "APPROVED",
+  coordinatorResponse || "",
+  reviewedByUserId
+);
 
   // Apply redistribution of appealed hours from the source assignment
   for (const item of redistributions) {
@@ -1640,19 +1642,7 @@ async resolveAppeal(
     }
   }
 
-  await repo.reviewAppeal(
-    appeal.id,
-    "APPROVED",
-    coordinatorResponse || "",
-    reviewedByUserId
-  );
 
-  // Verify the appeal was actually updated
-  const updatedAppeal = await repo.getAppealById(appeal.id);
-  if (!updatedAppeal || updatedAppeal.status !== "APPROVED") {
-    console.error("Appeal status update failed:", updatedAppeal);
-    throw new Error("Failed to update appeal status to APPROVED");
-  }
 
   const staffRes = await db.query(`
     SELECT user_id
@@ -1724,25 +1714,10 @@ const body =
   }
 await repo.deleteZeroHourAssignmentsByRound(round.id);
 
-await client.query("COMMIT");
 
 return { message: "Appeal resolved successfully" };
 
-} catch (err) {
 
-  await client.query("ROLLBACK");
-
-  console.error(
-    "RESOLVE APPEAL ERROR:",
-    err
-  );
-
-  throw err;
-
-} finally {
-
-  client.release();
-}
 }
 
 async getAppealDetails(appealId) {
