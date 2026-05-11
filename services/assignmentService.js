@@ -204,10 +204,10 @@ if (conflict && conflict.chosenStaffId === null) {
 }
 
 if (conflict && conflict.chosenStaffId !== null) {
-  eligible = this.limitConflictWinnerShare(
+  eligible = this.orderConflictEligibleTAs(
     eligible,
     assignmentMap,
-    course,
+    courseId,
     conflict
   );
 }
@@ -374,24 +374,33 @@ sortEligibleTAs(eligible, mode, options = {}) {
   return eligible;
 }
 
-limitConflictWinnerShare(eligible, assignmentMap, course, conflict) {
-  const courseId = Number(course.courseId);
+orderConflictEligibleTAs(eligible, assignmentMap, courseId, conflict) {
   const winnerId = Number(conflict.chosenStaffId);
-  const winnerKey = `${winnerId}-${courseId}`;
-  const winnerHours = Number(assignmentMap[winnerKey]?.hours || 0);
-  const winnerTarget = Math.ceil(Number(course.requiredHours) / 2);
 
-  if (winnerHours < winnerTarget) {
-    return eligible;
-  }
+  eligible.sort((a, b) => {
+    const aCourseHours = Number(assignmentMap[`${a.id}-${courseId}`]?.hours || 0);
+    const bCourseHours = Number(assignmentMap[`${b.id}-${courseId}`]?.hours || 0);
 
-  const nonWinners = eligible.filter(ta => Number(ta.id) !== winnerId);
+    if (aCourseHours !== bCourseHours) {
+      return aCourseHours - bCourseHours;
+    }
 
-  if (nonWinners.length === 0) {
-    return eligible;
-  }
+    if (Number(a.id) === winnerId && Number(b.id) !== winnerId) {
+      return -1;
+    }
 
-  return nonWinners;
+    if (Number(b.id) === winnerId && Number(a.id) !== winnerId) {
+      return 1;
+    }
+
+    if (a.assignedHours !== b.assignedHours) {
+      return a.assignedHours - b.assignedHours;
+    }
+
+    return a.id - b.id;
+  });
+
+  return eligible;
 }
 
 rebalanceAssignmentsForFairness(
