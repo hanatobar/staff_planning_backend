@@ -181,7 +181,7 @@ taHoursByLevelByStaff[levelKey] = taHoursAtLevel;
 // enforce fair distribution: each TA gets at most (required_hours - 1)
 // to ensure sharing among all who want it at this priority
 if (eligible.length > 1) {
-  const fairMax = course.requiredHours - 1;
+  const fairMax = Math.max(course.requiredHours - 1, 1);
   
   eligible = eligible.filter(ta => {
     const hoursGotAtLevel = taHoursAtLevel[ta.id] || 0;
@@ -1399,6 +1399,12 @@ async resolveAppeal(
     throw new Error("Appeal has already been reviewed");
   }
 
+  // Immediately re-verify the appeal exists to catch any issues early
+  const appealVerify = await repo.getAppealById(appealId);
+  if (!appealVerify) {
+    throw new Error("Appeal verification failed - appeal not found");
+  }
+
   const sourceAssignment = await repo.getAssignmentByIdInRound(
     appeal.assignment_id,
     round.id
@@ -1480,7 +1486,7 @@ async resolveAppeal(
     }
 
     await repo.insertAppealRedistribution(
-  appealId,
+  appealVerify.id,
   targetStaffId,
   hours
 );
@@ -1562,7 +1568,7 @@ async resolveAppeal(
         }
 
         await repo.insertAppealCompensation(
-  appealId,
+  appealVerify.id,
   "UNCOVERED",
   courseId,
   null,
@@ -1615,7 +1621,7 @@ async resolveAppeal(
         );
 
         await repo.insertAppealCompensation(
-  appealId,
+  appealVerify.id,
   "TRANSFER",
   null,
   sourceAssignmentId,
@@ -1632,7 +1638,7 @@ async resolveAppeal(
   }
 
   await repo.reviewAppeal(
-    appealId,
+    appealVerify.id,
     "APPROVED",
     coordinatorResponse || "",
     reviewedByUserId
@@ -1642,7 +1648,7 @@ async resolveAppeal(
     SELECT user_id
     FROM staff
     WHERE id = $1
-  `, [appeal.staff_id]);
+  `, [appealVerify.staff_id]);
 
   if (staffRes.rows.length > 0 && staffRes.rows[0].user_id) {
 const title = "Appeal Approved";
@@ -1699,8 +1705,8 @@ const body =
         title,
         body,
         "APPEAL_REVIEWED",
-        appeal.round_id,
-        sourceAssignmentDeleted ? null : appeal.assignment_id
+        appealVerify.round_id,
+        sourceAssignmentDeleted ? null : appealVerify.assignment_id
       );
     } catch (err) {
       console.error("APPEAL RESOLUTION NOTIFICATION ERROR:", err);
