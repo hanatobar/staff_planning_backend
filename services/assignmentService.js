@@ -198,12 +198,22 @@ this.sortEligibleTAs(eligible, selectionMode, {
   allowRandomTieBreak
 });
 
-const chosenTa = eligible[0];
-
           const conflict = this.findConflict(conflicts, courseId, level);
 if (conflict && conflict.chosenStaffId === null) {
-  conflict.chosenStaffId = chosenTa.id;
+  conflict.chosenStaffId = eligible[0].id;
 }
+
+if (conflict && conflict.chosenStaffId !== null) {
+  eligible = this.limitConflictWinnerShare(
+    eligible,
+    assignmentMap,
+    course,
+    conflict
+  );
+}
+
+const chosenTa = eligible[0];
+
           const chunk = this.calculateChunk(
             chosenTa.remaining,
             course.remainingHours
@@ -362,6 +372,26 @@ sortEligibleTAs(eligible, mode, options = {}) {
   });
 
   return eligible;
+}
+
+limitConflictWinnerShare(eligible, assignmentMap, course, conflict) {
+  const courseId = Number(course.courseId);
+  const winnerId = Number(conflict.chosenStaffId);
+  const winnerKey = `${winnerId}-${courseId}`;
+  const winnerHours = Number(assignmentMap[winnerKey]?.hours || 0);
+  const winnerTarget = Math.ceil(Number(course.requiredHours) / 2);
+
+  if (winnerHours < winnerTarget) {
+    return eligible;
+  }
+
+  const nonWinners = eligible.filter(ta => Number(ta.id) !== winnerId);
+
+  if (nonWinners.length === 0) {
+    return eligible;
+  }
+
+  return nonWinners;
 }
 
 rebalanceAssignmentsForFairness(
