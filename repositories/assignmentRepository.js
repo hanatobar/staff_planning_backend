@@ -3,6 +3,17 @@ const db = require("../db/database");
 class AssignmentRepository {
   async clearAssignmentsByRound(roundId) {
     await db.query(
+      `
+      UPDATE notification
+      SET assignment_id = NULL
+      WHERE assignment_id IN (
+        SELECT id FROM assignment WHERE round_id = $1
+      )
+      `,
+      [roundId]
+    );
+
+    await db.query(
       "DELETE FROM assignment WHERE round_id = $1",
       [roundId]
     );
@@ -187,6 +198,17 @@ async getTargetManualAssignment(roundId, staffId, courseId) {
 
 async deleteZeroHourAssignmentsByRound(roundId) {
   await db.query(`
+    UPDATE notification
+    SET assignment_id = NULL
+    WHERE assignment_id IN (
+      SELECT id
+      FROM assignment
+      WHERE round_id = $1
+        AND assigned_hours <= 0
+    )
+  `, [roundId]);
+
+  await db.query(`
     DELETE FROM assignment
     WHERE round_id = $1
       AND assigned_hours <= 0
@@ -227,6 +249,12 @@ async subtractHoursFromAssignment(id, hours) {
 }
 
 async deleteAssignment(id) {
+  await db.query(`
+    UPDATE notification
+    SET assignment_id = NULL
+    WHERE assignment_id = $1
+  `, [id]);
+
   await db.query(`
     DELETE FROM assignment
     WHERE id = $1

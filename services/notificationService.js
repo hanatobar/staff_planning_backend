@@ -69,13 +69,26 @@ async getNotificationsByUser(userId) {
   }
 
 async createSystemNotification(recipientUserId, title, body, type, roundId = null, assignmentId = null) {
+  let safeAssignmentId = assignmentId;
+
+  if (safeAssignmentId !== null && safeAssignmentId !== undefined) {
+    const assignmentRes = await db.query(
+      "SELECT 1 FROM assignment WHERE id = $1",
+      [safeAssignmentId]
+    );
+
+    if (assignmentRes.rows.length === 0) {
+      safeAssignmentId = null;
+    }
+  }
+
   return await repo.createNotification(
     recipientUserId,
     title,
     body,
     type,
     roundId,
-    assignmentId
+    safeAssignmentId
   );
 }
 

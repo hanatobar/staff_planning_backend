@@ -14,6 +14,9 @@ class NotificationHttpController {
         id: n.id,
         title: n.title,
         body: n.body,
+        type: n.type,
+        roundId: n.round_id,
+        assignmentId: n.assignment_id,
         isRead: n.is_read,
         createdAt: n.created_at
       }));

@@ -1423,6 +1423,8 @@ async resolveAppeal(
 );
   }
 
+  let sourceAssignmentDeleted = false;
+
   const updatedSource = await repo.subtractHoursFromAssignment(
     sourceAssignment.id,
     appealedHours
@@ -1430,6 +1432,7 @@ async resolveAppeal(
 
   if (Number(updatedSource.assigned_hours) === 0) {
     await repo.deleteAssignment(sourceAssignment.id);
+    sourceAssignmentDeleted = true;
   }
 
   // Optional compensation to the appealing TA
@@ -1633,7 +1636,7 @@ const body =
       body,
       "APPEAL_REVIEWED",
       appeal.round_id,
-      appeal.assignment_id
+      sourceAssignmentDeleted ? null : appeal.assignment_id
     );
   }
   await repo.deleteZeroHourAssignmentsByRound(round.id);
