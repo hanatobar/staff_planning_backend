@@ -57,21 +57,13 @@ class AssignmentHttpController {
 
 async generatePlan(req, res) {
   try {
-
-    // ✅ respond immediately
-    res.json({ message: "Plan generation started..." });
-
-    // 🔥 run in background
-    setImmediate(async () => {
-      try {
-        await service.generatePlan();
-        console.log("✅ Plan generated");
-      } catch (err) {
-        console.error("❌ Generation failed:", err.message);
-      }
-    });
-
+    // Wait for plan generation to complete before responding
+    await service.generatePlan();
+    console.log("✅ Plan generated");
+    
+    res.json({ message: "Plan generated successfully!" });
   } catch (err) {
+    console.error("❌ Generation failed:", err.message);
     res.status(500).json({ error: err.message });
   }
 }
