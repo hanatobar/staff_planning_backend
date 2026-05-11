@@ -167,6 +167,10 @@ for (const p of preferences) {
         while (course.remainingHours > 0 && progress) {
           progress = false;
 
+          let eligible = levelPrefs
+  .map(p => taMap[p.staffId])
+  .filter(ta => ta && ta.remaining > 0);
+
 // apply domination protection only for larger courses
 if (course.requiredHours > 3) {
 
