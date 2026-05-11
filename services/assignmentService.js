@@ -198,13 +198,22 @@ this.sortEligibleTAs(eligible, selectionMode, {
   allowRandomTieBreak
 });
 
-const chosenTa = eligible[0];
-
-
           const conflict = this.findConflict(conflicts, courseId, level);
-if (conflict && conflict.chosenStaffId === null) {
-  conflict.chosenStaffId = chosenTa.id;
-}
+
+          if (conflict && conflict.chosenStaffId !== null) {
+            this.sortConflictEligibleTAsForCourse(
+              eligible,
+              assignmentMap,
+              course,
+              conflict
+            );
+          }
+
+          const chosenTa = eligible[0];
+
+          if (conflict && conflict.chosenStaffId === null) {
+            conflict.chosenStaffId = chosenTa.id;
+          }
           const chunk = this.calculateChunk(
             chosenTa.remaining,
             course.remainingHours
@@ -362,6 +371,54 @@ sortEligibleTAs(eligible, mode, options = {}) {
 
   return eligible;
 }
+
+sortConflictEligibleTAsForCourse(eligible, assignmentMap, course, conflict) {
+  const courseId = Number(course.courseId);
+  const chosenStaffId = Number(conflict.chosenStaffId);
+  const involvedCount = Math.max(Number(conflict.staffIds?.length || 0), 1);
+  const winnerTargetHours = Math.ceil(Number(course.requiredHours) / involvedCount);
+  const chosenTa = eligible.find(ta => Number(ta.id) === chosenStaffId);
+
+  if (chosenTa) {
+    const chosenCourseHours =
+      Number(assignmentMap[`${chosenStaffId}-${courseId}`]?.hours || 0);
+
+    if (chosenCourseHours < winnerTargetHours) {
+      eligible.sort((a, b) => {
+        if (Number(a.id) === chosenStaffId) return -1;
+        if (Number(b.id) === chosenStaffId) return 1;
+        return 0;
+      });
+
+      return eligible;
+    }
+  }
+
+  eligible.sort((a, b) => {
+    const aCourseHours = Number(assignmentMap[`${a.id}-${courseId}`]?.hours || 0);
+    const bCourseHours = Number(assignmentMap[`${b.id}-${courseId}`]?.hours || 0);
+
+    if (aCourseHours !== bCourseHours) {
+      return aCourseHours - bCourseHours;
+    }
+
+    if (a.assignedHours !== b.assignedHours) {
+      return a.assignedHours - b.assignedHours;
+    }
+
+    const aRatio = a.maxWorkload === 0 ? 1 : a.assignedHours / a.maxWorkload;
+    const bRatio = b.maxWorkload === 0 ? 1 : b.assignedHours / b.maxWorkload;
+
+    if (aRatio !== bRatio) {
+      return aRatio - bRatio;
+    }
+
+    return a.id - b.id;
+  });
+
+  return eligible;
+}
+
 rebalanceAssignmentsForFairness(
   assignmentMap,
   taMap,
