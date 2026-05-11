@@ -1384,7 +1384,14 @@ async resolveAppeal(
   redistributions,
   compensations
 ) {
-  const round = await roundService.getCurrentRound();
+
+  const client = await db.connect();
+
+  try {
+
+    await client.query("BEGIN");
+
+    const round = await roundService.getCurrentRound();
 
   if (!round) {
     throw new Error("No current round found");
@@ -1399,11 +1406,7 @@ async resolveAppeal(
     throw new Error("Appeal has already been reviewed");
   }
 
-  // Immediately re-verify the appeal exists to catch any issues early
-  const appealVerify = await repo.getAppealById(appealId);
-  if (!appealVerify) {
-    throw new Error("Appeal verification failed - appeal not found");
-  }
+ 
 
   const sourceAssignment = await repo.getAssignmentByIdInRound(
     appeal.assignment_id,
@@ -1486,7 +1489,7 @@ async resolveAppeal(
     }
 
     await repo.insertAppealRedistribution(
-  appealVerify.id,
+  appeal.id,
   targetStaffId,
   hours
 );
@@ -1568,7 +1571,7 @@ async resolveAppeal(
         }
 
         await repo.insertAppealCompensation(
-  appealVerify.id,
+  appeal.id,
   "UNCOVERED",
   courseId,
   null,
@@ -1621,7 +1624,7 @@ async resolveAppeal(
         );
 
         await repo.insertAppealCompensation(
-  appealVerify.id,
+  appeal.id,
   "TRANSFER",
   null,
   sourceAssignmentId,
@@ -1638,17 +1641,24 @@ async resolveAppeal(
   }
 
   await repo.reviewAppeal(
-    appealVerify.id,
+    appeal.id,
     "APPROVED",
     coordinatorResponse || "",
     reviewedByUserId
   );
 
+  // Verify the appeal was actually updated
+  const updatedAppeal = await repo.getAppealById(appeal.id);
+  if (!updatedAppeal || updatedAppeal.status !== "APPROVED") {
+    console.error("Appeal status update failed:", updatedAppeal);
+    throw new Error("Failed to update appeal status to APPROVED");
+  }
+
   const staffRes = await db.query(`
     SELECT user_id
     FROM staff
     WHERE id = $1
-  `, [appealVerify.staff_id]);
+  `, [appeal.staff_id]);
 
   if (staffRes.rows.length > 0 && staffRes.rows[0].user_id) {
 const title = "Appeal Approved";
@@ -1705,15 +1715,34 @@ const body =
         title,
         body,
         "APPEAL_REVIEWED",
-        appealVerify.round_id,
-        sourceAssignmentDeleted ? null : appealVerify.assignment_id
+        appeal.round_id,
+        sourceAssignmentDeleted ? null : appeal.assignment_id
       );
     } catch (err) {
       console.error("APPEAL RESOLUTION NOTIFICATION ERROR:", err);
     }
   }
-  await repo.deleteZeroHourAssignmentsByRound(round.id);
-  return { message: "Appeal resolved successfully" };
+await repo.deleteZeroHourAssignmentsByRound(round.id);
+
+await client.query("COMMIT");
+
+return { message: "Appeal resolved successfully" };
+
+} catch (err) {
+
+  await client.query("ROLLBACK");
+
+  console.error(
+    "RESOLVE APPEAL ERROR:",
+    err
+  );
+
+  throw err;
+
+} finally {
+
+  client.release();
+}
 }
 
 async getAppealDetails(appealId) {
