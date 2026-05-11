@@ -167,21 +167,21 @@ for (const p of preferences) {
         while (course.remainingHours > 0 && progress) {
           progress = false;
 
-let eligible = levelPrefs
-  .map(p => taMap[p.staffId])
-  .filter(ta => ta && ta.remaining > 0);
+// apply domination protection only for larger courses
+if (course.requiredHours > 3) {
 
-eligible = eligible.filter(ta => {
+  eligible = eligible.filter(ta => {
 
-  const currentCourseHours =
-    Number(
-      assignmentMap[`${ta.id}-${courseId}`]?.hours || 0
-    );
+    const currentCourseHours =
+      Number(
+        assignmentMap[`${ta.id}-${courseId}`]?.hours || 0
+      );
 
-  // prevent domination of same course
-  return currentCourseHours <
-    Math.ceil(course.requiredHours * 0.6);
-});
+    return currentCourseHours <
+      Math.ceil(course.requiredHours * 0.7);
+  });
+
+}
 
 // prevent one TA from dominating too early
 const filteredEligible = eligible.filter((ta) => {
@@ -216,7 +216,9 @@ if (conflict && conflict.chosenStaffId === null) {
 }
 
 
-
+if (!eligible.length) {
+  break;
+}
 const chosenTa = eligible[0];
 
           const chunk = this.calculateChunk(
