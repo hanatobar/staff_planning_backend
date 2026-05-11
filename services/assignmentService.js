@@ -146,6 +146,7 @@ for (const p of preferences) {
     const conflicts = this.detectConflicts(preferencesByCourseAndLevel, conflictMode);
 
     const assignmentMap = {};
+    const taHoursByLevelByStaff = {}; // Track hours per TA per preference level
 
     for (const level of sortedLevels) {
       for (const courseIdStr of Object.keys(courseMap)) {
@@ -171,20 +172,33 @@ for (const p of preferences) {
   .map(p => taMap[p.staffId])
   .filter(ta => ta && ta.remaining > 0);
 
-// apply domination protection to prevent one TA from taking too many hours
-// when multiple TAs prefer the same course
+// Track how many hours this TA got at this preference level for this course
+const levelKey = `${level}-${courseId}`;
+const taHoursAtLevel = taHoursByLevelByStaff[levelKey] || {};
+taHoursByLevelByStaff[levelKey] = taHoursAtLevel;
+
+// When multiple TAs prefer the same course at the same level,
+// enforce fair distribution: each TA gets at most (required_hours - 1)
+// to ensure sharing among all who want it at this priority
 if (eligible.length > 1) {
-  const fairShare = Math.ceil(course.requiredHours / eligible.length);
-  const maxPerTA = Math.max(fairShare, 1);
-
+  const fairMax = course.requiredHours - 1;
+  
   eligible = eligible.filter(ta => {
-    const currentCourseHours =
-      Number(
-        assignmentMap[`${ta.id}-${courseId}`]?.hours || 0
-      );
-
-    return currentCourseHours < maxPerTA;
+    const hoursGotAtLevel = taHoursAtLevel[ta.id] || 0;
+    return hoursGotAtLevel < fairMax;
   });
+  
+  // If all TAs are blocked by fair max, let those with fewest hours go first
+  if (eligible.length === 0) {
+    eligible = levelPrefs
+      .map(p => taMap[p.staffId])
+      .filter(ta => ta && ta.remaining > 0)
+      .sort((a, b) => {
+        const aHours = taHoursAtLevel[a.id] || 0;
+        const bHours = taHoursAtLevel[b.id] || 0;
+        return aHours - bHours;
+      });
+  }
 }
 
 // prevent one TA from dominating too early
@@ -248,6 +262,9 @@ const chosenTa = eligible[0];
           chosenTa.assignedHours += chunk;
           chosenTa.remaining -= chunk;
           course.remainingHours -= chunk;
+          
+          // Track hours at this preference level
+          taHoursAtLevel[chosenTa.id] = (taHoursAtLevel[chosenTa.id] || 0) + chunk;
 
           progress = true;
         }
