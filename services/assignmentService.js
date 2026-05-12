@@ -1242,11 +1242,9 @@ async transferAssignmentHours(sourceAssignmentId, targetStaffId, hours) {
 
   const updatedSource = await repo.subtractHoursFromAssignment(source.id, hours);
 
-  if (Number(updatedSource.assigned_hours) === 0) {
-    await repo.deleteAssignment(source.id);
-  }
-
-  await repo.deleteZeroHourAssignmentsByRound(round.id);
+if (Number(updatedSource.assigned_hours) < 0) {
+  throw new Error("Assignment hours became invalid");
+}
 
   return { message: "Hours transferred successfully" };
 }
@@ -1497,17 +1495,15 @@ async resolveAppeal(
 );
   }
 
-  let sourceAssignmentDeleted = false;
 
   const updatedSource = await repo.subtractHoursFromAssignment(
     sourceAssignment.id,
     appealedHours
   );
 
-  if (Number(updatedSource.assigned_hours) === 0) {
-    await repo.deleteAssignment(sourceAssignment.id);
-    sourceAssignmentDeleted = true;
-  }
+if (Number(updatedSource.assigned_hours) < 0) {
+  throw new Error("Assignment hours became invalid");
+}
 
   // Optional compensation to the appealing TA
   if (Array.isArray(compensations)) {
@@ -1635,9 +1631,9 @@ async resolveAppeal(
 
 
 
-        if (Number(updatedTransferSource.assigned_hours) === 0) {
-          await repo.deleteAssignment(transferSource.id);
-        }
+if (Number(updatedTransferSource.assigned_hours) < 0) {
+  throw new Error("Assignment hours became invalid");
+}
       } else {
         throw new Error(`Invalid compensation source type: ${sourceType}`);
       }
@@ -1707,13 +1703,12 @@ const body =
         body,
         "APPEAL_REVIEWED",
         appeal.round_id,
-        sourceAssignmentDeleted ? null : appeal.assignment_id
+      appeal.assignment_id
       );
     } catch (err) {
       console.error("APPEAL RESOLUTION NOTIFICATION ERROR:", err);
     }
   }
-await repo.deleteZeroHourAssignmentsByRound(round.id);
 
 
 return { message: "Appeal resolved successfully" };
