@@ -1445,12 +1445,7 @@ async resolveAppeal(
 
 
   }
-  await repo.reviewAppeal(
-  appeal.id,
-  "APPROVED",
-  coordinatorResponse || "",
-  reviewedByUserId
-);
+
 
   // Apply redistribution of appealed hours from the source assignment
   for (const item of redistributions) {
@@ -1676,7 +1671,7 @@ for (const staffId of affectedStaffIds) {
     );
 
   if (assigned > maxWorkload) {
-
+    
     const staffRes = await db.query(`
       SELECT name
       FROM staff
@@ -1692,6 +1687,12 @@ for (const staffId of affectedStaffIds) {
     );
   }
 }
+await repo.reviewAppeal(
+  appeal.id,
+  "APPROVED",
+  coordinatorResponse || "",
+  reviewedByUserId
+);
   const staffRes = await db.query(`
     SELECT user_id
     FROM staff
