@@ -1,17 +1,16 @@
 const pool = require('../db/database');
 
-async function addCourse(name, code, hours, semester) {
+async function addCourse(name, code, semester) {
 
   const query = `
-    INSERT INTO course (name, code, hours, semester)
-    VALUES ($1,$2,$3,$4)
+    INSERT INTO course (name, code, semester)
+    VALUES ($1,$2,$3)
     RETURNING *;
   `;
 
   const result = await pool.query(query, [
     name,
     code,
-    hours,
     semester
   ]);
 
@@ -41,21 +40,19 @@ async function deleteCourse(id){
 
 }
 
-async function updateCourse(id, name, code, hours, semester) {
+async function updateCourse(id, name, code, semester) {
   const query = `
     UPDATE course
     SET name = $1,
         code = $2,
-        hours = $3,
-        semester = $4
-    WHERE id = $5
+        semester = $3
+    WHERE id = $4
     RETURNING *;
   `;
 
   const result = await pool.query(query, [
     name,
     code,
-    hours,
     semester,
     id
   ]);

@@ -1,16 +1,17 @@
 const db = require("../db/database");
 const courseRepository = require('../repositories/courseRepository');
 
-async function addCourse(name, code, hours, semester){
+async function addCourse(name, code, semester){
 
   return await courseRepository.addCourse(
     name,
     code,
-    hours,
     semester
   );
 
 }
+
+
 
 async function getAllCourses(){
 
@@ -150,7 +151,7 @@ async function deleteCourse(id) {
   }
 }
 
-async function updateCourse(id, name, code, hours, semester) {
+async function updateCourse(id, name, code, semester) {
   const cid = Number(id);
 
   if (!Number.isFinite(cid) || cid <= 0) {
@@ -161,15 +162,12 @@ async function updateCourse(id, name, code, hours, semester) {
     throw new Error("All course fields are required");
   }
 
-  if (!hours || Number(hours) <= 0) {
-    throw new Error("Course hours must be greater than zero");
-  }
+
 
   await courseRepository.updateCourse(
     cid,
     name.trim(),
     code.trim(),
-    Number(hours),
     semester.trim()
   );
 

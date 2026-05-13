@@ -6,12 +6,11 @@ async function addCourse(call, callback){
       console.log("AddCourse called:", call.request);
 
 
-    const {name, code, hours, semester} = call.request;
+    const {name, code, semester} = call.request;
 
     await courseService.addCourse(
       name,
       code,
-      hours,
       semester
     );
 
@@ -29,13 +28,12 @@ async function addCourse(call, callback){
 
 async function updateCourse(call, callback) {
   try {
-    const { id, name, code, hours, semester } = call.request;
+    const { id, name, code, semester } = call.request;
 
     const result = await courseService.updateCourse(
       id,
       name,
       code,
-      hours,
       semester
     );
 

@@ -12,16 +12,14 @@ service CourseService {
 message AddCourseRequest {
   string name = 1;
   string code = 2;
-  int32 hours = 3;
-  string semester = 4;
+  string semester = 3;
 }
 
 message UpdateCourseRequest {
   int32 id = 1;
   string name = 2;
   string code = 3;
-  int32 hours = 4;
-  string semester = 5;
+  string semester = 4;
 }
 
 
@@ -29,8 +27,7 @@ message Course {
   int32 id = 1;
   string name = 2;
   string code = 3;
-  int32 hours = 4;
-  string semester = 5;
+  string semester = 4;
 }
 
 message CourseList {

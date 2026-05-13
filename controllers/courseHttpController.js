@@ -4,12 +4,11 @@ class CourseHttpController {
 
   async addCourse(req, res) {
     try {
-      const { name, code, hours, semester } = req.body;
+      const { name, code, semester } = req.body;
 
       const result = await service.addCourse(
         name,
         code,
-        hours,
         semester
       );
 
@@ -28,7 +27,6 @@ class CourseHttpController {
         id: c.id,
         name: c.name,
         code: c.code,
-        hours: c.hours,
         semester: c.semester
       }));
 
@@ -55,13 +53,12 @@ class CourseHttpController {
   async updateCourse(req, res) {
     try {
       const id = Number(req.params.id);
-      const { name, code, hours, semester } = req.body;
+      const { name, code, semester } = req.body;
 
       const result = await service.updateCourse(
         id,
         name,
         code,
-        hours,
         semester
       );
 
