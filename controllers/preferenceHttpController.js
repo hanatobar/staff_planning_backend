@@ -87,6 +87,28 @@ class PreferenceHttpController {
     }
   }
 
+  async getAllPreferencesByRound(req, res) {
+  try {
+    const roundId = Number(req.params.roundId);
+
+    const data = await service.getAllPreferencesByRound(roundId);
+
+    const formatted = data.map(p => ({
+      id: p.id,
+      staffId: p.staff_id,
+      courseId: p.course_id,
+      preferenceLevel: p.preference_level,
+      courseName: p.course_name,
+      staffName: p.staff_name
+    }));
+
+    res.json({ preferences: formatted });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 }
 
 module.exports = new PreferenceHttpController();

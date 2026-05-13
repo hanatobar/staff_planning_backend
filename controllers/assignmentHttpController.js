@@ -281,5 +281,66 @@ async getNonSubmitters(req, res) {
   }
 }
 
+async getAssignmentsByRound(req, res) {
+  try {
+    const roundId = Number(req.params.roundId);
+
+    const data = await service.getAssignmentsByRound(roundId);
+
+    const formatted = data.map(a => ({
+      id: a.id,
+      staffId: a.staff_id,
+      courseId: a.course_id,
+      assignedHours: a.assigned_hours,
+      status: a.status,
+      staffName: a.staff_name,
+      courseName: a.course_name
+    }));
+
+    res.json(formatted);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async getConflictsByRound(req, res) {
+  try {
+    const roundId = Number(req.params.roundId);
+
+    const data = await service.getConflictsByRound(roundId);
+
+    const formatted = data.map(c => ({
+      id: c.id,
+      courseId: c.course_id,
+      courseName: c.course_name,
+      status: c.status,
+      preferenceLevel: c.preference_level,
+      involvedStaffNames: c.involved_staff_names,
+      chosenStaffName: c.chosen_staff_name || "",
+      chosenStaffId: c.chosen_staff_id || 0,
+      resolutionMethod: c.resolution_method,
+    }));
+
+    res.json({ conflicts: formatted });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async getAppealsByRound(req, res) {
+  try {
+    const roundId = Number(req.params.roundId);
+
+    const data = await service.getAppealsByRound(roundId);
+
+    res.json(data);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 }
 module.exports = new AssignmentHttpController();

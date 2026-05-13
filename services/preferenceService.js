@@ -183,6 +183,10 @@ async getAllPreferences() {
 
     return { message: "Preferences reset successfully" };
   }
+
+  async getAllPreferencesByRound(roundId) {
+  return await preferenceRepository.getAllPreferences(roundId);
+}
 }
 
 module.exports = new PreferenceService();

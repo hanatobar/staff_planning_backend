@@ -94,6 +94,27 @@ async getCurrentRound(req, res) {
     }
   }
 
+  async getAllRounds(req, res) {
+  try {
+
+    const data = await service.getAllRounds();
+
+    const formatted = data.map(r => ({
+      id: r.id,
+      startAt: r.start_at,
+      endAt: r.end_at,
+      isLocked: r.is_locked,
+      semester: r.semester,
+      conflictResolutionMode: r.conflict_resolution_mode
+    }));
+
+    res.json(formatted);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 }
 
 module.exports = new PreferenceRoundHttpController();

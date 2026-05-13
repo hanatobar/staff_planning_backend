@@ -103,6 +103,16 @@ async updateSubmissionStatus(roundId, staffId, status, isValid, submittedAt) {
 
     return result.rows;
   }
+
+  async getAllRounds() {
+  const result = await db.query(`
+    SELECT *
+    FROM preference_round
+    ORDER BY id DESC
+  `);
+
+  return result.rows;
+}
 }
 
 module.exports = new PreferenceRoundRepository();

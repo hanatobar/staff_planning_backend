@@ -361,6 +361,10 @@ async lockRound(userId = null, isAuto = false) {
 
     return latestRound;
   }
+
+  async getAllRounds() {
+  return await repo.getAllRounds();
+}
 }
 
 module.exports = new PreferenceRoundService();

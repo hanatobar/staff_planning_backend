@@ -1784,6 +1784,18 @@ async getAppealDetails(appealId) {
   };
 }
 
+async getAssignmentsByRound(roundId) {
+  return await repo.getAllAssignments(roundId);
+}
+
+async getConflictsByRound(roundId) {
+  return await repo.getAllConflicts(roundId);
+}
+
+async getAppealsByRound(roundId) {
+  return await repo.getAllAppeals(roundId);
+}
+
 
 
 }

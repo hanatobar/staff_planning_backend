@@ -287,6 +287,18 @@ app.get("/assignments/appeals/:id", (req, res) => assignmentHttpController.getAp
 app.post("/assignments/appeals/review", (req, res) => assignmentHttpController.reviewAppeal(req, res));
 app.post("/assignments/appeals/resolve", (req, res) => assignmentHttpController.resolveAppeal(req, res));
 
+app.get("/assignments/round/:roundId", (req, res) =>
+  assignmentHttpController.getAssignmentsByRound(req, res)
+);
+
+app.get("/assignments/conflicts/round/:roundId", (req, res) =>
+  assignmentHttpController.getConflictsByRound(req, res)
+);
+
+app.get("/assignments/appeals/round/:roundId", (req, res) =>
+  assignmentHttpController.getAppealsByRound(req, res)
+);
+
 const courseRequirementHttpController = require("./controllers/courseRequirementHttpController");
 
 app.post("/course-requirements", (req, res) =>
@@ -367,6 +379,9 @@ app.post("/rounds/lock", (req, res) =>
 app.get("/rounds/current", (req, res) =>
   preferenceRoundHttpController.getCurrentRound(req, res)
 );
+app.get("/rounds", (req, res) =>
+  preferenceRoundHttpController.getAllRounds(req, res)
+);
 app.get("/rounds/submission/:roundId", (req, res) =>
   preferenceRoundHttpController.getSubmissionStatus(req, res)
 );
@@ -381,6 +396,9 @@ app.get("/preferences/staff/:staffId", (req, res) =>
 );
 app.get("/preferences", (req, res) =>
   preferenceHttpController.getAllPreferences(req, res)
+);
+app.get("/preferences/round/:roundId", (req, res) =>
+  preferenceHttpController.getAllPreferencesByRound(req, res)
 );
 app.put("/preferences/:id", (req, res) =>
   preferenceHttpController.updatePreference(req, res)
