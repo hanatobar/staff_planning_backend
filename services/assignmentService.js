@@ -1443,21 +1443,7 @@ async resolveAppeal(
       throw new Error("Redistribution target cannot be the same as the appealing TA");
     }
 
-    const workloadRow = await repo.getStaffMaxWorkload(targetStaffId);
-    if (!workloadRow) {
-      throw new Error(`Target TA ${targetStaffId} not found`);
-    }
 
-    const currentAssigned = await repo.getTotalAssignedHoursForStaffInRound(
-      targetStaffId,
-      round.id
-    );
-
-    const maxWorkload = Number(workloadRow.max_workload);
-
-    if (currentAssigned + hours > maxWorkload) {
-      throw new Error(`Target TA ${targetStaffId} would exceed max workload`);
-    }
   }
   await repo.reviewAppeal(
   appeal.id,
@@ -1640,7 +1626,72 @@ if (Number(updatedTransferSource.assigned_hours) < 0) {
     }
   }
 
+  const affectedStaffIds = new Set();
 
+// appealing TA
+affectedStaffIds.add(Number(appeal.staff_id));
+
+// redistribution targets
+for (const item of redistributions) {
+  affectedStaffIds.add(Number(item.targetStaffId));
+}
+
+// transfer compensation sources
+if (Array.isArray(compensations)) {
+  for (const item of compensations) {
+
+    if (
+      String(item.sourceType || "").toUpperCase() === "TRANSFER"
+    ) {
+
+      const sourceAssignment = await repo.getAssignmentByIdInRound(
+        Number(item.sourceAssignmentId),
+        round.id
+      );
+
+      if (sourceAssignment) {
+        affectedStaffIds.add(
+          Number(sourceAssignment.staff_id)
+        );
+      }
+    }
+  }
+}
+
+// FINAL VALIDATION
+for (const staffId of affectedStaffIds) {
+
+  const workloadRow =
+    await repo.getStaffMaxWorkload(staffId);
+
+  if (!workloadRow) continue;
+
+  const maxWorkload =
+    Number(workloadRow.max_workload);
+
+  const assigned =
+    await repo.getTotalAssignedHoursForStaffInRound(
+      staffId,
+      round.id
+    );
+
+  if (assigned > maxWorkload) {
+
+    const staffRes = await db.query(`
+      SELECT name
+      FROM staff
+      WHERE id = $1
+    `, [staffId]);
+
+    const staffName =
+      staffRes.rows[0]?.name || `TA ${staffId}`;
+
+    throw new Error(
+      `Redistribution overloads ${staffName}. ` +
+      `Compensation transfer is required before resolving this appeal.`
+    );
+  }
+}
   const staffRes = await db.query(`
     SELECT user_id
     FROM staff
