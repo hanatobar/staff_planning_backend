@@ -208,6 +208,27 @@ const result = await authService.login(email, password);
   }
 });
 
+app.post("/signup", async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    const result = await authService.signup(
+      name,
+      email,
+      password,
+      role
+    );
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+
+    res.status(400).json({
+      message: err.message
+    });
+  }
+});
+
 app.get("/auth/coordinator", async (req, res) => {
   try {
     const result = await authService.getCoordinatorUser();
