@@ -62,6 +62,22 @@ async function setInitialPassword(call, callback) {
   }
 }
 
+async function forgotPassword(call, callback) {
+  try {
+    const { email } = call.request;
+
+    const result = await authService.forgotPassword(email);
+
+    callback(null, {
+      message: result.message,
+    });
+  } catch (error) {
+    callback(null, {
+      message: error.message,
+    });
+  }
+}
+
 async function getCoordinatorUser(call, callback) {
   try {
     const user = await authService.getCoordinatorUser();
@@ -176,5 +192,6 @@ module.exports = {
   checkInitialPasswordStatus,
   createCoordinator,
   deleteCoordinator,
-  loginHttp
+  loginHttp,
+  forgotPassword
 };

@@ -124,6 +124,54 @@ async function setInitialPassword(email, password) {
   };
 }
 
+async function forgotPassword(email) {
+  const trimmedEmail = email.trim();
+
+  const result = await db.query(
+    "SELECT * FROM users WHERE email = $1",
+    [trimmedEmail]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error("No account found for this email");
+  }
+
+  const user = result.rows[0];
+
+  const defaultPassword = generateDefaultPassword(user.name);
+
+  const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+  await db.query(`
+    UPDATE users
+    SET password = $1,
+        is_password_set = FALSE
+    WHERE id = $2
+  `, [hashedPassword, user.id]);
+
+  const emailService = require('./emailService');
+
+  await emailService.sendEmail(
+    trimmedEmail,
+    "Password Reset - GUC Staff Planning Tool",
+    `Hello ${user.name},
+
+A password reset was requested for your account.
+
+Temporary Password: ${defaultPassword}
+
+Please log in using this temporary password.
+You will then be redirected to create a new password.
+
+Regards,
+Staff Planning System`
+  );
+
+  return {
+    message: "Temporary password sent successfully"
+  };
+}
+
 function generateDefaultPassword(name) {
   const clean = (name || "user").replace(/\s+/g, "").toLowerCase();
   const random = Math.floor(1000 + Math.random() * 9000);
@@ -214,5 +262,6 @@ module.exports = {
   getCoordinatorUser,
   checkInitialPasswordStatus,
   createCoordinator,
-  deleteCoordinator
+  deleteCoordinator,
+  forgotPassword
 };

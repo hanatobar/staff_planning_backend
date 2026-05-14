@@ -249,6 +249,22 @@ app.post("/auth/set-initial-password", async (req, res) => {
   res.json(result);
 });
 
+app.post("/auth/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const result = await authService.forgotPassword(email);
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+
+    res.status(400).json({
+      message: err.message
+    });
+  }
+});
+
 
 
 process.on("uncaughtException", (err) => {
