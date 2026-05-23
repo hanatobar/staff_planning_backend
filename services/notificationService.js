@@ -122,8 +122,10 @@ await Promise.all(
       // ✅ EMAIL
       emailService.sendEmail(
         ta.email,
-        "Reminder: Preference Round Ending Soon",
-        `Hello ${ta.name},
+        `Reminder: Preference Round #${round.id} Ending Soon`,
+`Hello ${ta.name},
+
+Round ID: ${round.id}
 
 The preference round will end in 15 minutes.
 Please submit your preferences.`

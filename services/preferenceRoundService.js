@@ -48,10 +48,12 @@ async handleOpenRoundBackground(round, semester, startAt, endAt) {
       tas.rows.map(ta =>
         this.safeSendEmail(
           ta.email,
-          "Preference Round Opened",
-          `Hello ${ta.name},
+          `Preference Round #${round.id} Opened`,
+`Hello ${ta.name},
 
+Round ID: ${round.id}
 Semester: ${semester}
+
 Start: ${formattedStart}
 Deadline: ${formattedEnd}
 
@@ -250,9 +252,9 @@ const deadline = new Date(round.end_at).toLocaleString('en-US', {
             try {
               await this.safeSendEmail(
                 ta.email,
-                "Missed Preference Deadline",
+               `Missed Preference Deadline - Round #${round.id}`,
                 `Hello ${ta.name},
-
+Round ID: ${round.id}
 Semester: ${round.semester}
 Deadline: ${deadline}
 
@@ -327,8 +329,12 @@ Non-submitters: ${result.non_submitters}`,
         try {
           await this.safeSendEmail(
             coordinator.email,
-            isAuto ? "Preference Round Automatically Locked" : "Preference Round Summary",
-            `The preference round has been locked.
+            isAuto
+  ? `Preference Round #${round.id} Automatically Locked`
+  : `Preference Round #${round.id} Summary`,
+`Round ID: ${round.id}
+
+The preference round has been locked.
 
 Submitted: ${result.submitted}
 Non-submitters: ${result.non_submitters}`

@@ -287,7 +287,7 @@ if (conflictMode === "PRIORITY") {
   }
 }
         await this.saveConflicts(conflicts, lockedRound.id);
-        await this.sendConflictEmails(conflicts);
+        await this.sendConflictEmails(conflicts, lockedRound);
 
 
     const unfilledBeforeFallback = Object.values(courseMap)
@@ -727,7 +727,7 @@ async getCoordinatorUser() {
   return result.rows[0];
 }
 
-async sendConflictEmails(conflicts) {
+async sendConflictEmails(conflicts, round) {
   for (const conflict of conflicts) {
 
     if (conflict.status === "SKIPPED") continue;
@@ -753,7 +753,7 @@ const coordinator = await this.getCoordinatorUser();
     for (const user of users) {
       await emailService.sendEmail(
         user.email,
-        "Conflict Detected",
+       `Conflict Detected - Round #${round.id}`,
 `Hello ${user.name},
 
 A preference conflict has been identified for the course "${courseName}" at preference level ${conflict.preferenceLevel}.
@@ -782,7 +782,7 @@ Staff Planning System`
 
 await emailService.sendEmail(
   coordinator.email,
-  "Conflict Detected (Coordinator Notification)",
+  `Conflict Detected - Round #${round.id} `,
 `Hello Coordinator,
 
 A preference conflict has been detected for the course "${courseName}" at preference level ${conflict.preferenceLevel}.
