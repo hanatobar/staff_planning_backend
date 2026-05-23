@@ -112,14 +112,10 @@ schedule15MinReminderIfNeeded(round) {
     try {
       console.log("🚀 Sending 15-min reminder...");
 
-      const tas = await db.query(`
-        SELECT id, user_id, name, email
-        FROM staff
-        WHERE LOWER(role) = 'ta'
-      `);
+const tas = await repo.getNotSubmittedTAsInRound(round.id);
 
 await Promise.all(
-  tas.rows.map(async (ta) => {
+  tas.map(async (ta) => {
     console.log("🔔 Sending to user:", ta.user_id);
 
     await Promise.all([

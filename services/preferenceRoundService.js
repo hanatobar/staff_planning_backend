@@ -235,11 +235,12 @@ async handleLockRoundBackground(round, isAuto) {
         AND pss.status = 'NON_SUBMITTER'
     `, [round.id]);
 
-    const deadline = new Date(round.end_at).toLocaleString('en-US', {
-      timeZone: 'Africa/Cairo',
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    });
+const deadline = new Date(round.end_at).toLocaleString('en-US', {
+  timeZone: 'Africa/Cairo',
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  hour12: true
+});
 
     // 🔹 2. Send emails + notifications to non-submitters (parallel, safe)
     await Promise.all(
