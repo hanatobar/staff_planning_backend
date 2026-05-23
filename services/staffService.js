@@ -268,16 +268,26 @@ async function deleteStaff(id) {
     const oldPriority = Number(staff.priority_rank || 0);
     const userId = staff.user_id;
 
-    await deleteStaffRelatedData(client, id);
-
     await client.query(
-      `DELETE FROM staff WHERE id = $1`,
+      `
+      UPDATE staff
+      SET role = 'DELETED_TA',
+          email = CONCAT('deleted_', id, '_', email),
+          priority_rank = NULL
+      WHERE id = $1
+      `,
       [id]
     );
 
-    if (userId != null ) {
+    if (userId != null) {
       await client.query(
-        `DELETE FROM users WHERE id = $1`,
+        `
+        UPDATE users
+        SET role = 'DELETED_TA',
+            email = CONCAT('deleted_', id, '_', email),
+            is_password_set = FALSE
+        WHERE id = $1
+        `,
         [userId]
       );
     }

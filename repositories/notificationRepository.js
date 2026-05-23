@@ -2,6 +2,27 @@ const db = require("../db/database");
 
 class NotificationRepository {
 async createNotification(recipientUserId, title, body, type, roundId = null, assignmentId = null) {
+  const existing = await db.query(`
+    SELECT *
+    FROM notification
+    WHERE recipient_user_id = $1
+      AND title = $2
+      AND body = $3
+      AND type = $4
+      AND (
+        ($5::int IS NULL AND round_id IS NULL) OR round_id = $5
+      )
+      AND (
+        ($6::int IS NULL AND assignment_id IS NULL) OR assignment_id = $6
+      )
+    ORDER BY id DESC
+    LIMIT 1
+  `, [recipientUserId, title, body, type, roundId, assignmentId]);
+
+  if (existing.rows.length > 0) {
+    return existing.rows[0];
+  }
+
   const result = await db.query(`
     INSERT INTO notification
     (recipient_user_id, title, body, type, round_id, assignment_id, is_read, created_at)

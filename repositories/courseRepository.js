@@ -18,9 +18,14 @@ async function addCourse(name, code, semester) {
 }
 
 async function getAllCourses(){
+  await pool.query(`
+    ALTER TABLE course
+    ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE
+  `);
 
   const query = `
     SELECT * FROM course
+    WHERE COALESCE(is_deleted, FALSE) = FALSE
     ORDER BY id ASC
   `;
 

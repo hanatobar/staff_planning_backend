@@ -15,6 +15,7 @@ const preferenceController = require("./controllers/preferenceController");
 const courseRequirementController = require("./controllers/courseRequirementController");
 const assignmentController = require("./controllers/assignmentController");
 const preferenceRoundController = require("./controllers/preferenceRoundController");
+const preferenceRoundService = require("./services/preferenceRoundService");
 const notificationController = require("./controllers/notificationController");
 const notificationService = require("./services/notificationService");
 const { getNotificationsByUser } = require('./repositories/notificationRepository');
@@ -448,6 +449,7 @@ const HTTP_PORT = process.env.PORT || 3000;
 
 app.listen(HTTP_PORT, "0.0.0.0", () => {
   console.log(`HTTP server running on port ${HTTP_PORT}`);
+  preferenceRoundService.startScheduler();
 });
 
 main();

@@ -132,6 +132,7 @@ async openRound(startAt, endAt, userId, conflictResolutionMode, semester) {
 
   // ✅ DO NOT await this
   this.handleOpenRoundBackground(round, normalizedSemester, startAt, endAt);
+  this.scheduleRoundAutoLockIfNeeded(round);
 
   return { message: "Preference round opened successfully" };
 }
@@ -170,6 +171,46 @@ async openRound(startAt, endAt, userId, conflictResolutionMode, semester) {
     }
 
     return round;
+  }
+
+  scheduleRoundAutoLockIfNeeded(round) {
+    if (!round || round.is_locked) return;
+
+    const delay = new Date(round.end_at).getTime() - Date.now();
+    if (delay <= 0) return;
+
+    setTimeout(() => {
+      this.autoLockIfNeeded().catch((err) => {
+        console.error("AUTO LOCK TIMER ERROR:", err.message);
+      });
+    }, delay);
+  }
+
+  async processDueRoundLocks() {
+    const round = await repo.getLatestRound();
+
+    if (!round || round.is_locked) return;
+
+    if (new Date() >= new Date(round.end_at)) {
+      await this.lockRound(null, true);
+    } else {
+      this.scheduleRoundAutoLockIfNeeded(round);
+    }
+  }
+
+  startScheduler(intervalMs = 60 * 1000) {
+    if (this.schedulerStarted) return;
+    this.schedulerStarted = true;
+
+    this.processDueRoundLocks().catch((err) => {
+      console.error("ROUND SCHEDULER STARTUP ERROR:", err.message);
+    });
+
+    setInterval(() => {
+      this.processDueRoundLocks().catch((err) => {
+        console.error("ROUND SCHEDULER ERROR:", err.message);
+      });
+    }, intervalMs);
   }
 
   async getLatestRound() {
@@ -313,7 +354,11 @@ async lockRound(userId = null, isAuto = false) {
   if (!round) throw new Error("No round exists");
   if (round.is_locked) throw new Error("Round already locked");
 
-  await repo.lockRound(round.id, userId);
+  const lockedRound = await repo.lockRound(round.id, userId);
+
+  if (!lockedRound) {
+    return { message: "Round already locked" };
+  }
 
   await db.query(`
     UPDATE preference_submission_status
@@ -323,7 +368,7 @@ async lockRound(userId = null, isAuto = false) {
   `, [round.id]);
 
   // ✅ run background
-  this.handleLockRoundBackground(round, isAuto);
+  this.handleLockRoundBackground(lockedRound, isAuto);
 
   return { message: "Round locked successfully" };
 }

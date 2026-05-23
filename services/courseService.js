@@ -19,10 +19,6 @@ async function getAllCourses(){
 
 }
 
-/**
- * Delete a course and all dependent rows (assignments, preferences, conflicts,
- * appeals, messages, notifications, requirements) in one transaction.
- */
 async function deleteCourse(id) {
   const cid = Number(id);
   if (!Number.isFinite(cid) || cid <= 0) {
@@ -44,100 +40,19 @@ async function deleteCourse(id) {
 
     await client.query(
       `
-      DELETE FROM message
-      WHERE assignment_id IN (SELECT id FROM assignment WHERE course_id = $1)
-         OR appeal_id IN (
-              SELECT aa.id
-              FROM assignment_appeal aa
-              JOIN assignment a ON a.id = aa.assignment_id
-              WHERE a.course_id = $1
-            )
-         OR conflict_id IN (
-              SELECT acs.conflict_id
-              FROM assignment_conflict_staff acs
-              JOIN assignment_conflict ac ON ac.id = acs.conflict_id
-              WHERE ac.course_id = $1
-            )
-      `,
-      [cid]
+      ALTER TABLE course
+      ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE
+      `
     );
 
     await client.query(
       `
-      DELETE FROM notification
-      WHERE assignment_id IN (SELECT id FROM assignment WHERE course_id = $1)
+      UPDATE course
+      SET is_deleted = TRUE,
+          code = CONCAT('deleted_', id, '_', code),
+          semester = CONCAT('deleted_', id, '_', semester)
+      WHERE id = $1
       `,
-      [cid]
-    );
-
-    await client.query(
-      `
-      DELETE FROM assignment_appeal_compensation
-      WHERE appeal_id IN (
-            SELECT aa.id
-            FROM assignment_appeal aa
-            JOIN assignment a ON a.id = aa.assignment_id
-            WHERE a.course_id = $1
-          )
-         OR source_assignment_id IN (SELECT id FROM assignment WHERE course_id = $1)
-         OR course_id = $1
-      `,
-      [cid]
-    );
-
-    await client.query(
-      `
-      DELETE FROM assignment_appeal_redistribution
-      WHERE appeal_id IN (
-            SELECT aa.id
-            FROM assignment_appeal aa
-            JOIN assignment a ON a.id = aa.assignment_id
-            WHERE a.course_id = $1
-          )
-      `,
-      [cid]
-    );
-
-    await client.query(
-      `
-      DELETE FROM assignment_appeal
-      WHERE assignment_id IN (SELECT id FROM assignment WHERE course_id = $1)
-      `,
-      [cid]
-    );
-
-    await client.query(
-      `
-      DELETE FROM assignment_conflict_staff
-      WHERE conflict_id IN (
-        SELECT id FROM assignment_conflict WHERE course_id = $1
-      )
-      `,
-      [cid]
-    );
-
-    await client.query(
-      `DELETE FROM assignment_conflict WHERE course_id = $1`,
-      [cid]
-    );
-
-    await client.query(
-      `DELETE FROM assignment WHERE course_id = $1`,
-      [cid]
-    );
-
-    await client.query(
-      `DELETE FROM preference WHERE course_id = $1`,
-      [cid]
-    );
-
-    await client.query(
-      `DELETE FROM course_requirements WHERE course_id = $1`,
-      [cid]
-    );
-
-    await client.query(
-      `DELETE FROM course WHERE id = $1`,
       [cid]
     );
 

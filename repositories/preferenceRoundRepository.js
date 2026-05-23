@@ -52,6 +52,7 @@ async createRound(startAt, endAt, userId, conflictResolutionMode, semester) {
       SET is_locked = TRUE,
           locked_by_user_id = $1
       WHERE id = $2
+        AND is_locked = FALSE
       RETURNING *
     `, [userId, roundId]);
 
