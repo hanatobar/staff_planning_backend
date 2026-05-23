@@ -821,7 +821,7 @@ if (coordinatorRes.rows.length > 0) {
   }
 }
 
-async sendApprovalEmails(assignments) {
+async sendApprovalEmails(assignments, round) {
   const assignmentsByStaff = {};
   const coordinator = await this.getCoordinatorUser();
 
@@ -866,8 +866,9 @@ async sendApprovalEmails(assignments) {
 
 const message = `Hello ${staffData.name},
 
-The final teaching plan has been approved, and your assignments for the current round are now confirmed.
+Round ID: ${round.id}
 
+The final teaching plan has been approved, and your assignments for the current round are now confirmed.
 Your assigned teaching load is:
 
 ${assignmentList}
@@ -881,7 +882,7 @@ Staff Planning System`;
 
     await emailService.sendEmail(
       email,
-      "Final Teaching Assignments Approved",
+      `Final Teaching Assignments Approved - Round #${round.id}`,
       message
     );
 
@@ -929,7 +930,7 @@ async approvePlan() {
   );
 
   const updatedAssignments = await repo.getAllAssignments(round.id);
-  this.sendApprovalEmails(updatedAssignments).catch((err) => {
+  this.sendApprovalEmails(updatedAssignments, round).catch((err) => {
     console.error("APPROVAL EMAIL BACKGROUND ERROR:", err);
   });
 
