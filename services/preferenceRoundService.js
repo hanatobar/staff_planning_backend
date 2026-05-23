@@ -67,8 +67,10 @@ Please submit your preferences.`
       tas.rows.map(ta =>
         notificationService.createSystemNotification(
           ta.user_id,
-          "Preference Round Created",
-          `Semester: ${semester}
+          `Preference Round #${round.id} Created`,
+`Round ID: ${round.id}
+
+Semester: ${semester}
 Start: ${formattedStart}
 Deadline: ${formattedEnd}`,
           "ROUND_OPENED",
@@ -270,8 +272,10 @@ You missed the submission.`
             try {
               await notificationService.createSystemNotification(
                 ta.user_id,
-                "Preference Deadline Missed",
-                `Semester: ${round.semester}
+                `Preference Deadline Missed - Round #${round.id}`,
+`Round ID: ${round.id}
+
+Semester: ${round.semester}
 Deadline: ${deadline}`,
                 "ROUND_MISSED_DEADLINE",
                 round.id,
@@ -308,7 +312,7 @@ Deadline: ${deadline}`,
 
           await notificationService.createSystemNotification(
             coordinator.id, // ⚠️ change to coordinator.user_id if needed
-            "Preference Round Summary",
+            `Preference Round #${round.id} Summary`,
             `Round ${round.id} has ended.
 
 Submitted: ${result.submitted}

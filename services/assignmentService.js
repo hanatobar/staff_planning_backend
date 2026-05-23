@@ -768,10 +768,10 @@ Staff Planning System`
       if( user.user_id){
       await notificationService.createSystemNotification(
   user.user_id,
-  "Preference Conflict Detected",
-  `A conflict was detected for course "${courseName}" at preference level ${conflict.preferenceLevel}. Please check with the coordinator if needed.`,
+   `Preference Conflict Detected - Round #${round.id}`,
+  `Round #${round.id}: A conflict was detected for course "${courseName}" at preference level ${conflict.preferenceLevel}. Please check with the coordinator if needed.`,
   "CONFLICT_DETECTED",
-  null,
+  round.id,
   null
 );
     }
@@ -811,10 +811,10 @@ if (coordinatorRes.rows.length > 0) {
 
   await notificationService.createSystemNotification(
     coordinatorId,
-    "Conflict Detected",
-    `A conflict was detected for course "${courseName}" at preference level ${conflict.preferenceLevel}. Involved TAs: ${users.map(u => u.name).join(", ")}.`,
+    `Conflict Detected - Round #${round.id}`,
+    `Round #${round.id}: A conflict was detected for course "${courseName}" at preference level ${conflict.preferenceLevel}. Involved TAs: ${users.map(u => u.name).join(", ")}.`,
     "CONFLICT_DETECTED",
-    null,
+    round.id,
     null
   );
 }
@@ -889,10 +889,10 @@ Staff Planning System`;
     if(userId){
       await notificationService.createSystemNotification(
         Number(userId),
-        "Final Plan Approved",
-        "Your final assignments have been approved. Please check your teaching load in the system.",
+        `Final Plan Approved - Round #${round.id}`,
+        `Your final assignments for round #${round.id} have been approved. Please check your teaching load in the system.`,
         "PLAN_APPROVED",
-        null,
+        round.id,
         null
       );
     }
@@ -1295,8 +1295,8 @@ async submitAppeal(assignmentId, staffId, appealedHours, reason) {
   const coordinator = await this.getCoordinatorUser();
   await notificationService.createSystemNotification(
     Number(coordinator.id),
-    "New Assignment Appeal",
-    "A TA submitted a new assignment appeal. Please review it. ",
+    `New Assignment Appeal - Round #${round.id}`,
+    `A TA submitted a new assignment appeal for round #${round.id}. Please review it.`,
     "APPEAL_SUBMITTED",
     round.id,
     assignmentId
