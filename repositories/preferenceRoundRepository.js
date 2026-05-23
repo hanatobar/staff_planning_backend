@@ -114,6 +114,18 @@ async updateSubmissionStatus(roundId, staffId, status, isValid, submittedAt) {
 
   return result.rows;
 }
+async extendRoundDeadline(roundId, newEndAt) {
+  const result = await db.query(`
+    UPDATE preference_round
+    SET
+      end_at = $2,
+      is_locked = FALSE
+    WHERE id = $1
+    RETURNING *
+  `, [roundId, newEndAt]);
+
+  return result.rows[0] || null;
+}
 }
 
 module.exports = new PreferenceRoundRepository();

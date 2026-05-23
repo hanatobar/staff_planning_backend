@@ -40,6 +40,31 @@ class PreferenceRoundHttpController {
     }
   }
 
+async extendRoundDeadline(req, res) {
+  try {
+
+    const {
+      roundId,
+      newEndAt,
+      userId
+    } = req.body;
+
+    const result =
+      await service.extendRoundDeadline(
+        roundId,
+        newEndAt,
+        userId
+      );
+
+    res.json(result);
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+}
+
 async getCurrentRound(req, res) {
   try {
         await service.autoLockIfNeeded();

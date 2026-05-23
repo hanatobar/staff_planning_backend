@@ -317,7 +317,7 @@ Deadline: ${deadline}`,
 
 Submitted: ${result.submitted}
 Non-submitters: ${result.non_submitters}`,
-            "COORDINATOR_NOTICE",
+            "ROUND_SUMMARY",
             round.id,
             null
           );
@@ -417,6 +417,92 @@ async lockRound(userId = null, isAuto = false) {
 
     return latestRound;
   }
+
+  async extendRoundDeadline(roundId, newEndAt, userId) {
+  const round = await repo.getLatestRound();
+
+  if (!round) {
+    throw new Error("No round exists");
+  }
+
+  if (round.id !== roundId) {
+    throw new Error("Only latest round can be extended");
+  }
+
+  const now = new Date();
+
+  if (new Date(newEndAt) <= now) {
+    throw new Error("New deadline must be in the future");
+  }
+
+  const updatedRound = await repo.extendRoundDeadline(
+    roundId,
+    newEndAt
+  );
+
+  if (!updatedRound) {
+    throw new Error("Failed to extend deadline");
+  }
+
+  this.scheduleRoundAutoLockIfNeeded(updatedRound);
+
+  const tas = await db.query(`
+    SELECT id, user_id, name, email
+    FROM staff
+    WHERE LOWER(TRIM(role)) IN ('ta', 'teaching assistant')
+  `);
+
+  const formattedDeadline =
+      new Date(newEndAt).toLocaleString('en-US', {
+    timeZone: 'Africa/Cairo',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    hour12: true
+  });
+
+  await Promise.all(
+    tas.rows.map(async (ta) => {
+
+      await this.safeSendEmail(
+        ta.email,
+        `Preference Round #${round.id} Deadline Extended`,
+`Hello ${ta.name},
+
+Round ID: ${round.id}
+
+The preference round deadline has been extended.
+
+New Deadline:
+${formattedDeadline}
+
+Please submit or update your preferences before the new deadline.
+
+Regards,
+Staff Planning System`
+      );
+
+      await notificationService.createSystemNotification(
+        ta.user_id,
+        `Preference Round #${round.id} Extended`,
+`Round ID: ${round.id}
+
+The round deadline was extended.
+
+New Deadline:
+${formattedDeadline}`,
+        "ROUND_EXTENDED",
+        round.id,
+        null
+      );
+    })
+  );
+
+  await notificationService.schedule15MinReminderIfNeeded(updatedRound);
+
+  return {
+    message: "Round deadline extended successfully"
+  };
+}
 
   async getAllRounds() {
   return await repo.getAllRounds();

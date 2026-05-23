@@ -414,6 +414,9 @@ app.post("/rounds/open", (req, res) =>
 app.post("/rounds/lock", (req, res) =>
   preferenceRoundHttpController.lockRound(req, res)
 );
+app.post("/rounds/extend", (req, res) =>
+  preferenceRoundHttpController.extendRoundDeadline(req, res)
+);
 app.get("/rounds/current", (req, res) =>
   preferenceRoundHttpController.getCurrentRound(req, res)
 );
