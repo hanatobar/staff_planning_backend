@@ -214,6 +214,19 @@ const filteredEligible = eligible.filter((ta) => {
 if (filteredEligible.length > 0) {
   eligible = filteredEligible;
 }
+const minAssigned = Math.min(
+  ...Object.values(taMap)
+    .filter(t => t.remaining > 0)
+    .map(t => t.assignedHours)
+);
+
+const balancedEligible = eligible.filter(
+  ta => ta.assignedHours <= minAssigned + 1
+);
+
+if (balancedEligible.length > 0) {
+  eligible = balancedEligible;
+}
 
 if (!eligible.length) {
   continue;
