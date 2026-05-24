@@ -186,7 +186,10 @@ taHoursByLevelByStaff[levelKey] = taHoursAtLevel;
 // enforce fair distribution: each TA gets at most (required_hours - 1)
 // to ensure sharing among all who want it at this priority
 if (eligible.length > 1) {
-  const fairMax = Math.max(course.requiredHours - 1, 1);
+  const fairMax = Math.max(
+  Math.ceil(course.requiredHours / eligible.length),
+  1
+);
   
   eligible = eligible.filter(ta => {
     const hoursGotAtLevel = taHoursAtLevel[ta.id] || 0;
@@ -620,29 +623,33 @@ async runFallbackAssignment(
         : [];
 
       // Stage 1: preferred TAs only
-      let eligible = preferredIds
-        .map(staffId => taMap[staffId])
-        .filter(ta => ta && ta.remaining > 0);
+let eligible = preferredIds
+  .map(staffId => taMap[staffId])
+  .filter(ta => ta && ta.remaining > 0);
+
+// prevent overloaded preferred TAs from dominating fallback
+const minAssigned = Math.min(
+  ...Object.values(taMap).map(t => t.assignedHours)
+);
+
+eligible = eligible.filter(
+  ta => ta.assignedHours <= minAssigned + 1
+);
+
+// if filtering removed everyone, restore original list
+if (eligible.length === 0) {
+  eligible = preferredIds
+    .map(staffId => taMap[staffId])
+    .filter(ta => ta && ta.remaining > 0);
+}
 
       this.sortEligibleTAs(eligible, "FAIRNESS", {
         allowRandomTieBreak: false
       });
 
-// Stage 2: use non-submitters first
+// Stage 2: allow ALL TAs fairly
 if (eligible.length === 0) {
-  eligible = Object.values(taMap)
-    .filter(ta =>
-      ta.remaining > 0 &&
-      !ta.isSubmitted
-    );
 
-  this.sortEligibleTAs(eligible, "FAIRNESS", {
-    allowRandomTieBreak: false
-  });
-}
-
-// Stage 3: if still no TA available, allow any TA
-if (eligible.length === 0) {
   eligible = Object.values(taMap)
     .filter(ta => ta.remaining > 0);
 
@@ -650,6 +657,8 @@ if (eligible.length === 0) {
     allowRandomTieBreak: false
   });
 }
+
+
 
       if (eligible.length === 0) {
         break;
@@ -679,6 +688,18 @@ if (eligible.length === 0) {
       chosenTa.assignedHours += chunk;
       chosenTa.remaining -= chunk;
       course.remainingHours -= chunk;
+      const gap = this.getLoadGap(taMap);
+
+if (gap > 2) {
+  this.rebalanceAssignmentsForFairness(
+    assignmentMap,
+    taMap,
+    {},
+    1,
+    new Set(),
+    3
+  );
+}
     }
   }
 }
@@ -1108,10 +1129,20 @@ course.taCount = courseStaffSets[course.courseId]
   };
 }
 
-async getNonSubmitters() {
+async getAvailableTAs() {
   const round = await roundService.getCurrentRound();
   if (!round) return [];
-  return await repo.getNonSubmittersByRound(round.id);
+
+  const result = await db.query(`
+    SELECT
+      s.id,
+      s.name
+    FROM staff s
+    WHERE LOWER(s.role) = 'ta'
+    ORDER BY s.name
+  `);
+
+  return result.rows;
 }
 async getUncoveredHours() {
   const round = await roundService.getCurrentRound();

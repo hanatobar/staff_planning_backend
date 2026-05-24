@@ -310,7 +310,7 @@ app.post("/assignments/approve", (req, res) => assignmentHttpController.approveP
 
 app.get("/assignments/analytics", (req, res) => assignmentHttpController.getAnalytics(req, res));
 app.get("/assignments/conflicts", (req, res) => assignmentHttpController.getConflicts(req, res));
-app.get("/assignments/non-submitters", (req, res) => assignmentHttpController.getNonSubmitters(req, res));
+  app.get("/assignments/available-tas", (req, res) => assignmentHttpController.getAvailableTAs(req, res));
 app.get("/assignments/uncovered-hours", (req, res) => assignmentHttpController.getUncoveredHours(req, res));
 
 app.post("/assignments/uncovered-hours/assign", (req, res) => assignmentHttpController.assignUncoveredHours(req, res));

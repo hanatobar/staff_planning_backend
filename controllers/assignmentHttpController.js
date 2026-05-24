@@ -272,9 +272,9 @@ async assignUncoveredHours(req, res) {
   }
 }
 
-async getNonSubmitters(req, res) {
+async getAvailableTAs(req, res) {
   try {
-    const data = await service.getNonSubmitters();
+    const data = await service.getAvailableTAs();
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
