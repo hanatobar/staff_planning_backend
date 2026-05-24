@@ -152,7 +152,10 @@ for (const p of preferences) {
 
     const assignmentMap = {};
     const taHoursByLevelByStaff = {}; // Track hours per TA per preference level
+    let progress = true;
 
+while (progress) {
+  progress = false;
     for (const level of sortedLevels) {
       for (const courseIdStr of Object.keys(courseMap)) {
         const courseId = Number(courseIdStr);
@@ -168,7 +171,6 @@ for (const p of preferences) {
           continue;
         }
 
-        let progress = true;
 
 let eligible = levelPrefs
   .map(p => taMap[p.staffId])
@@ -260,9 +262,11 @@ assignmentMap[key].hours += chunk;
 chosenTa.assignedHours += chunk;
 chosenTa.remaining -= chunk;
 course.remainingHours -= chunk;
+progress = true;
 
 taHoursAtLevel[chosenTa.id] =
   (taHoursAtLevel[chosenTa.id] || 0) + chunk;
+}
       }
     }
 for (const conflict of conflicts) {
