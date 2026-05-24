@@ -170,33 +170,26 @@ for (const p of preferences) {
 
         let progress = true;
 
-        while (course.remainingHours > 0 && progress) {
-          progress = false;
-
-          let eligible = levelPrefs
+let eligible = levelPrefs
   .map(p => taMap[p.staffId])
   .filter(ta => ta && ta.remaining > 0);
 
-// Track how many hours this TA got at this preference level for this course
 const levelKey = `${level}-${courseId}`;
 const taHoursAtLevel = taHoursByLevelByStaff[levelKey] || {};
 taHoursByLevelByStaff[levelKey] = taHoursAtLevel;
 
-// When multiple TAs prefer the same course at the same level,
-// enforce fair distribution: each TA gets at most (required_hours - 1)
-// to ensure sharing among all who want it at this priority
 if (eligible.length > 1) {
+
   const fairMax = Math.max(
-  Math.ceil(course.requiredHours / eligible.length),
-  1
-);
-  
+    Math.ceil(course.requiredHours / eligible.length),
+    1
+  );
+
   eligible = eligible.filter(ta => {
     const hoursGotAtLevel = taHoursAtLevel[ta.id] || 0;
     return hoursGotAtLevel < fairMax;
   });
-  
-  // If all TAs are blocked by fair max, let those with fewest hours go first
+
   if (eligible.length === 0) {
     eligible = levelPrefs
       .map(p => taMap[p.staffId])
@@ -209,23 +202,23 @@ if (eligible.length > 1) {
   }
 }
 
-// prevent one TA from dominating too early
 const filteredEligible = eligible.filter((ta) => {
   const loadRatio =
-      ta.maxWorkload === 0 ? 1 : ta.assignedHours / ta.maxWorkload;
+    ta.maxWorkload === 0 ? 1 : ta.assignedHours / ta.maxWorkload;
+
   return loadRatio < 0.9;
 });
 
-// use filtered list only if it still leaves at least one candidate
 if (filteredEligible.length > 0) {
   eligible = filteredEligible;
 }
 
-if (eligible.length === 0) {
-  break;
+if (!eligible.length) {
+  continue;
 }
 
 const selectionMode = this.getSelectionMode(conflictMode, levelPrefs);
+
 const allowRandomTieBreak = this.shouldAllowRandomTieBreak(
   conflictMode,
   levelPrefs,
@@ -236,46 +229,40 @@ this.sortEligibleTAs(eligible, selectionMode, {
   allowRandomTieBreak
 });
 
-          const conflict = this.findConflict(conflicts, courseId, level);
+const conflict = this.findConflict(conflicts, courseId, level);
+
 if (conflict && conflict.chosenStaffId === null) {
   conflict.chosenStaffId = eligible[0].id;
 }
 
-
-if (!eligible.length) {
-  break;
-}
 const chosenTa = eligible[0];
 
-          const chunk = this.calculateChunk(
-            chosenTa.remaining,
-            course.remainingHours
-          );
+const chunk = this.calculateChunk(
+  chosenTa.remaining,
+  course.remainingHours
+);
 
-          if (chunk <= 0) {
-            break;
-          }
+if (chunk <= 0) {
+  continue;
+}
 
-          const key = `${chosenTa.id}-${courseId}`;
+const key = `${chosenTa.id}-${courseId}`;
 
-          if (!assignmentMap[key]) {
-            assignmentMap[key] = {
-              staffId: chosenTa.id,
-              courseId,
-              hours: 0
-            };
-          }
+if (!assignmentMap[key]) {
+  assignmentMap[key] = {
+    staffId: chosenTa.id,
+    courseId,
+    hours: 0
+  };
+}
 
-          assignmentMap[key].hours += chunk;
-          chosenTa.assignedHours += chunk;
-          chosenTa.remaining -= chunk;
-          course.remainingHours -= chunk;
-          
-          // Track hours at this preference level
-          taHoursAtLevel[chosenTa.id] = (taHoursAtLevel[chosenTa.id] || 0) + chunk;
+assignmentMap[key].hours += chunk;
+chosenTa.assignedHours += chunk;
+chosenTa.remaining -= chunk;
+course.remainingHours -= chunk;
 
-          progress = true;
-        }
+taHoursAtLevel[chosenTa.id] =
+  (taHoursAtLevel[chosenTa.id] || 0) + chunk;
       }
     }
 for (const conflict of conflicts) {
