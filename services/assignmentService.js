@@ -152,6 +152,8 @@ for (const p of preferences) {
 
     const assignmentMap = {};
     const taHoursByLevelByStaff = {}; // Track hours per TA per preference level
+    const protectedAssignments = new Set();
+
     let progress = true;
 
 while (progress) {
@@ -276,6 +278,18 @@ chosenTa.assignedHours += chunk;
 chosenTa.remaining -= chunk;
 course.remainingHours -= chunk;
 progress = true;
+const gap = this.getLoadGap(taMap);
+
+if (gap > 1) {
+  this.rebalanceAssignmentsForFairness(
+    assignmentMap,
+    taMap,
+    preferenceLookup,
+    1,
+    protectedAssignments,
+    2
+  );
+}
 
 taHoursAtLevel[chosenTa.id] =
   (taHoursAtLevel[chosenTa.id] || 0) + chunk;
@@ -289,7 +303,6 @@ for (const conflict of conflicts) {
     conflict.status = "RESOLVED";
   }
 }
-const protectedAssignments = new Set();
 
 if (conflictMode === "PRIORITY") {
   for (const conflict of conflicts) {
