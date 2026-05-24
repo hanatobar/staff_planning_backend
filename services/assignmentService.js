@@ -30,9 +30,8 @@ const staffRes = await db.query(`
   SELECT id, name, max_workload, priority_rank
   FROM staff
   WHERE LOWER(role) = 'ta'
-    AND id = ANY($1)
   ORDER BY id
-`, [[...submittedTAIds]]);
+`);
 
 const prefRes = await db.query(`
   SELECT p.staff_id, p.course_id, p.preference_level
@@ -70,20 +69,26 @@ const reqRes = await db.query(`
 
     const taMap = {};
     for (const s of staff) {
-      taMap[s.id] = {
-        id: Number(s.id),
-        name: s.name,
-        maxWorkload: Number(s.max_workload),
-            priorityRank: Number(s.priority_rank),
-        assignedHours: 0,
-        remaining: Number(s.max_workload)
-      };
+taMap[s.id] = {
+  id: Number(s.id),
+  name: s.name,
+  maxWorkload: Number(s.max_workload),
+  priorityRank: Number(s.priority_rank),
+  assignedHours: 0,
+  remaining: Number(s.max_workload),
+  isSubmitted: submittedTAIds.has(Number(s.id))
+};
     }
 
-      if (conflictMode === "PRIORITY") {
-  for (const ta of Object.values(taMap)) {
+if (conflictMode === "PRIORITY") {
+  for (const taId of submittedTAIds) {
+
+    const ta = taMap[taId];
+
     if (!ta.priorityRank || ta.priorityRank <= 0) {
-      throw new Error("All submitted TAs must have a valid priority rank for PRIORITY mode");
+      throw new Error(
+        "All submitted TAs must have a valid priority rank for PRIORITY mode"
+      );
     }
   }
 }
@@ -623,15 +628,28 @@ async runFallbackAssignment(
         allowRandomTieBreak: false
       });
 
-      // Stage 2: if no preferred TA is available, use any TA with remaining capacity
-      if (eligible.length === 0) {
-        eligible = Object.values(taMap)
-          .filter(ta => ta.remaining > 0);
+// Stage 2: use non-submitters first
+if (eligible.length === 0) {
+  eligible = Object.values(taMap)
+    .filter(ta =>
+      ta.remaining > 0 &&
+      !ta.isSubmitted
+    );
 
-        this.sortEligibleTAs(eligible, "FAIRNESS", {
-          allowRandomTieBreak: false
-        });
-      }
+  this.sortEligibleTAs(eligible, "FAIRNESS", {
+    allowRandomTieBreak: false
+  });
+}
+
+// Stage 3: if still no TA available, allow any TA
+if (eligible.length === 0) {
+  eligible = Object.values(taMap)
+    .filter(ta => ta.remaining > 0);
+
+  this.sortEligibleTAs(eligible, "FAIRNESS", {
+    allowRandomTieBreak: false
+  });
+}
 
       if (eligible.length === 0) {
         break;
@@ -1118,18 +1136,15 @@ async assignUncoveredHours(targetStaffId, courseId, hours) {
     throw new Error("Hours must be greater than zero");
   }
 
-const nonSubmitters = await repo.getNonSubmittersByRound(round.id);
+const targetRes = await db.query(`
+  SELECT id
+  FROM staff
+  WHERE id = $1
+    AND LOWER(role) = 'ta'
+`, [targetStaffId]);
 
-console.log("NON SUBMITTERS:", nonSubmitters.map(s => s.staff_id));
-
-const target = nonSubmitters.find(
-  s => Number(s.staff_id) === Number(targetStaffId)
-);
-
-if (!target) {
-  throw new Error(
-    `Target TA ${targetStaffId} not found in non-submitters list`
-  );
+if (targetRes.rows.length === 0) {
+  throw new Error("Target TA not found");
 }
 
   const uncovered = await repo.getUncoveredHoursByRound(round.id);
@@ -1196,12 +1211,16 @@ async transferAssignmentHours(sourceAssignmentId, targetStaffId, hours) {
     throw new Error("Transfer hours exceed source assignment hours");
   }
 
-  const nonSubmitters = await repo.getNonSubmittersByRound(round.id);
-  const target = nonSubmitters.find(s => Number(s.staff_id) === Number(targetStaffId));
+const targetRes = await db.query(`
+  SELECT id
+  FROM staff
+  WHERE id = $1
+    AND LOWER(role) = 'ta'
+`, [targetStaffId]);
 
-  if (!target) {
-    throw new Error("Target TA is not a non-submitter in the current round");
-  }
+if (targetRes.rows.length === 0) {
+  throw new Error("Target TA not found");
+}
 
   if (Number(source.staff_id) === Number(targetStaffId)) {
     throw new Error("Source and target TA cannot be the same");
