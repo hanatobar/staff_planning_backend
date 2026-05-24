@@ -655,8 +655,23 @@ if (eligible.length === 0) {
 // Stage 2: allow ALL TAs fairly
 if (eligible.length === 0) {
 
+const minAssigned = Math.min(
+  ...Object.values(taMap)
+    .filter(ta => ta.remaining > 0)
+    .map(ta => ta.assignedHours)
+);
+
+eligible = Object.values(taMap)
+  .filter(
+    ta =>
+      ta.remaining > 0 &&
+      ta.assignedHours <= minAssigned + 1
+  );
+
+if (eligible.length === 0) {
   eligible = Object.values(taMap)
     .filter(ta => ta.remaining > 0);
+}
 
   this.sortEligibleTAs(eligible, "FAIRNESS", {
     allowRandomTieBreak: false
