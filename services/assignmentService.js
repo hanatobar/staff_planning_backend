@@ -226,7 +226,10 @@ const balancedEligible = eligible.filter(
   ta => ta.assignedHours <= minAssigned + 1
 );
 
-if (balancedEligible.length > 0) {
+if (
+  balancedEligible.length > 0 &&
+  balancedEligible.length < eligible.length
+) {
   eligible = balancedEligible;
 }
 
@@ -280,7 +283,7 @@ course.remainingHours -= chunk;
 progress = true;
 const gap = this.getLoadGap(taMap);
 
-if (gap > 1) {
+if (gap > 2) {
   this.rebalanceAssignmentsForFairness(
     assignmentMap,
     taMap,
