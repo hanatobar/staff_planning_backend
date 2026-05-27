@@ -659,9 +659,27 @@ eligible = eligible.filter(
 
 // if filtering removed everyone, restore original list
 if (eligible.length === 0) {
+
+  // Try fairly balanced preferred TAs first
   eligible = preferredIds
     .map(staffId => taMap[staffId])
-    .filter(ta => ta && ta.remaining > 0);
+    .filter(ta => {
+      if (!ta || ta.remaining <= 0) return false;
+
+      const loadRatio =
+        ta.maxWorkload === 0
+          ? 1
+          : ta.assignedHours / ta.maxWorkload;
+
+      return loadRatio < 0.75;
+    });
+
+  // If still none, restore all preferred TAs
+  if (eligible.length === 0) {
+    eligible = preferredIds
+      .map(staffId => taMap[staffId])
+      .filter(ta => ta && ta.remaining > 0);
+  }
 }
 
       this.sortEligibleTAs(eligible, "FAIRNESS", {
