@@ -218,7 +218,7 @@ const filteredEligible = eligible.filter((ta) => {
 
   // Prevent one TA from dominating too early
   const fairnessGuard =
-    ta.assignedHours <= minAssigned + 1;
+    ta.assignedHours <= minAssigned + 2;
 
   return loadRatio < 0.9 && fairnessGuard;
 });
@@ -515,9 +515,17 @@ rebalanceAssignmentsForFairness(
         preferenceLookup[`${leastLoaded.id}-${donor.courseId}`];
 
       // Receiver must also prefer the course
-      if (receiverLevel === undefined) {
-        continue;
-      }
+const receiverTa = taMap[leastLoaded.id];
+
+const isNonSubmitter =
+  receiverTa && !receiverTa.isSubmitted;
+
+if (
+  receiverLevel === undefined &&
+  !isNonSubmitter
+) {
+  continue;
+}
 
       // Donor must have a valid preference level too
       if (donorLevel === undefined) {
@@ -526,9 +534,12 @@ rebalanceAssignmentsForFairness(
 
       // Keep rebalancing preference-based:
       // receiver preference must not be much worse than donor preference
-      if (receiverLevel > donorLevel + maxPreferenceDrop) {
-        continue;
-      }
+if (
+  receiverLevel !== undefined &&
+  receiverLevel > donorLevel + maxPreferenceDrop
+) {
+  continue;
+}
 
       if (Number(donor.hours) <= 0) {
         continue;
