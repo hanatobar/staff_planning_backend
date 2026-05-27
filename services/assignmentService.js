@@ -218,7 +218,7 @@ const filteredEligible = eligible.filter((ta) => {
 
   // Prevent one TA from dominating too early
   const fairnessGuard =
-    ta.assignedHours <= minAssigned + 2;
+    ta.assignedHours <= minAssigned + 1;
 
   return loadRatio < 0.9 && fairnessGuard;
 });
