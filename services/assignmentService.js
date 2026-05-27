@@ -206,13 +206,25 @@ if (eligible.length > 1) {
   }
 }
 
+const minAssigned = Math.min(
+  ...Object.values(taMap).map(t => t.assignedHours)
+);
+
 const filteredEligible = eligible.filter((ta) => {
   const loadRatio =
-    ta.maxWorkload === 0 ? 1 : ta.assignedHours / ta.maxWorkload;
+    ta.maxWorkload === 0
+      ? 1
+      : ta.assignedHours / ta.maxWorkload;
 
-  return loadRatio < 0.9;
+  // Prevent one TA from dominating too early
+  const fairnessGuard =
+    ta.assignedHours <= minAssigned + 2;
+
+  return loadRatio < 0.9 && fairnessGuard;
 });
 
+// If fairness filtering removes everyone,
+// restore original eligible list
 if (filteredEligible.length > 0) {
   eligible = filteredEligible;
 }
@@ -268,7 +280,7 @@ course.remainingHours -= chunk;
 progress = true;
 const gap = this.getLoadGap(taMap);
 
-if (gap > 2) {
+if (gap > 1) {
   this.rebalanceAssignmentsForFairness(
     assignmentMap,
     taMap,
@@ -522,8 +534,13 @@ rebalanceAssignmentsForFairness(
         continue;
       }
 
-      // Move exactly 1 hour
-      donor.hours -= 1;
+const transferAmount = Math.min(
+  2,
+  donor.hours,
+  currentGap - maxGap
+);
+
+donor.hours -= transferAmount;
 
       if (donor.hours === 0) {
         delete assignmentMap[`${donor.staffId}-${donor.courseId}`];
@@ -538,14 +555,13 @@ rebalanceAssignmentsForFairness(
           hours: 0
         };
       }
+assignmentMap[receiverKey].hours += transferAmount;
 
-      assignmentMap[receiverKey].hours += 1;
+mostLoaded.assignedHours -= transferAmount;
+mostLoaded.remaining += transferAmount;
 
-      mostLoaded.assignedHours -= 1;
-      mostLoaded.remaining += 1;
-
-      leastLoaded.assignedHours += 1;
-      leastLoaded.remaining -= 1;
+leastLoaded.assignedHours += transferAmount;
+leastLoaded.remaining -= transferAmount;
 
       changed = true;
       break;
@@ -710,7 +726,7 @@ if (eligible.length === 0) {
       course.remainingHours -= chunk;
       const gap = this.getLoadGap(taMap);
 
-if (gap > 2) {
+if (gap > 1) {
   this.rebalanceAssignmentsForFairness(
     assignmentMap,
     taMap,
