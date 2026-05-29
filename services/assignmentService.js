@@ -218,7 +218,7 @@ const filteredEligible = eligible.filter((ta) => {
 
   // Prevent one TA from dominating too early
   const fairnessGuard =
-    ta.assignedHours <= minAssigned + 2;
+    ta.assignedHours <= minAssigned + 4;
 
   return loadRatio < 0.9 && fairnessGuard;
 });
@@ -278,18 +278,7 @@ chosenTa.assignedHours += chunk;
 chosenTa.remaining -= chunk;
 course.remainingHours -= chunk;
 progress = true;
-const gap = this.getLoadGap(taMap);
 
-if (gap > 1) {
-  this.rebalanceAssignmentsForFairness(
-    assignmentMap,
-    taMap,
-    preferenceLookup,
-    1,
-    protectedAssignments,
-    2
-  );
-}
 
 taHoursAtLevel[chosenTa.id] =
   (taHoursAtLevel[chosenTa.id] || 0) + chunk;
@@ -334,7 +323,7 @@ this.rebalanceAssignmentsForFairness(
   assignmentMap,
   taMap,
   preferenceLookup,
-  1,
+  2,
   protectedAssignments,
   2
 );
@@ -753,18 +742,7 @@ if (eligible.length === 0) {
       chosenTa.assignedHours += chunk;
       chosenTa.remaining -= chunk;
       course.remainingHours -= chunk;
-      const gap = this.getLoadGap(taMap);
 
-if (gap > 1) {
-  this.rebalanceAssignmentsForFairness(
-    assignmentMap,
-    taMap,
-    {},
-    1,
-    new Set(),
-    3
-  );
-}
     }
   }
 }
