@@ -62,6 +62,28 @@ class AssignmentController {
   }
 }
 
+async swapAssignmentHours(call, callback) {
+  try {
+
+    const result =
+      await assignmentService.swapAssignmentHours(
+        call.request.sourceAssignmentId,
+        call.request.targetAssignmentId,
+        call.request.hours
+      );
+
+    callback(null, result);
+
+  } catch (err) {
+
+    callback({
+      code: grpc.status.INVALID_ARGUMENT,
+      message: err.message
+    });
+
+  }
+}
+
 
 
 async getAssignmentsByStaff(call, callback) {

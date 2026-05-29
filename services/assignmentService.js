@@ -1365,6 +1365,186 @@ if (Number(updatedSource.assigned_hours) < 0) {
   return { message: "Hours transferred successfully" };
 }
 
+async swapAssignmentHours(
+  sourceAssignmentId,
+  targetAssignmentId,
+  hours
+) {
+  const round = await roundService.getCurrentRound();
+
+  if (!round) {
+    throw new Error("No current round found");
+  }
+
+  if (!round.is_locked) {
+    throw new Error(
+      "Manual swap is allowed only after the round is locked"
+    );
+  }
+
+  if (hours <= 0) {
+    throw new Error("Hours must be greater than zero");
+  }
+
+  const source = await repo.getAssignmentByIdInRound(
+    sourceAssignmentId,
+    round.id
+  );
+
+  const target = await repo.getAssignmentByIdInRound(
+    targetAssignmentId,
+    round.id
+  );
+
+  if (!source) {
+    throw new Error("Source assignment not found");
+  }
+
+  if (!target) {
+    throw new Error("Target assignment not found");
+  }
+
+  if (Number(source.id) === Number(target.id)) {
+    throw new Error(
+      "Source and target assignments cannot be the same"
+    );
+  }
+
+  if (
+    Number(source.staff_id) ===
+    Number(target.staff_id)
+  ) {
+    throw new Error(
+      "Assignments belong to the same TA"
+    );
+  }
+
+  if (
+    Number(source.course_id) ===
+    Number(target.course_id)
+  ) {
+    throw new Error(
+      "Assignments belong to the same course"
+    );
+  }
+
+  if (
+    Number(source.assigned_hours) < Number(hours)
+  ) {
+    throw new Error(
+      "Swap hours exceed source assignment hours"
+    );
+  }
+
+  if (
+    Number(target.assigned_hours) < Number(hours)
+  ) {
+    throw new Error(
+      "Swap hours exceed target assignment hours"
+    );
+  }
+
+  await db.query("BEGIN");
+
+  try {
+
+    // TA A receives Course B
+
+    const sourceReceives =
+      await repo.getTargetAssignmentInRound(
+        round.id,
+        source.staff_id,
+        target.course_id
+      );
+
+    if (sourceReceives) {
+      await repo.addHoursToAssignment(
+        sourceReceives.id,
+        hours
+      );
+    } else {
+      await repo.insertManualAssignment(
+        source.staff_id,
+        target.course_id,
+        hours,
+        round.id
+      );
+    }
+
+    // TA B receives Course A
+
+    const targetReceives =
+      await repo.getTargetAssignmentInRound(
+        round.id,
+        target.staff_id,
+        source.course_id
+      );
+
+    if (targetReceives) {
+      await repo.addHoursToAssignment(
+        targetReceives.id,
+        hours
+      );
+    } else {
+      await repo.insertManualAssignment(
+        target.staff_id,
+        source.course_id,
+        hours,
+        round.id
+      );
+    }
+
+    const updatedSource =
+      await repo.subtractHoursFromAssignment(
+        source.id,
+        hours
+      );
+
+    const updatedTarget =
+      await repo.subtractHoursFromAssignment(
+        target.id,
+        hours
+      );
+
+    if (
+      Number(updatedSource.assigned_hours) < 0 ||
+      Number(updatedTarget.assigned_hours) < 0
+    ) {
+      throw new Error(
+        "Assignment hours became invalid"
+      );
+    }
+
+    if (
+      Number(updatedSource.assigned_hours) === 0
+    ) {
+      await repo.deleteAssignment(
+        updatedSource.id
+      );
+    }
+
+    if (
+      Number(updatedTarget.assigned_hours) === 0
+    ) {
+      await repo.deleteAssignment(
+        updatedTarget.id
+      );
+    }
+
+    await db.query("COMMIT");
+
+    return {
+      message: "Hours swapped successfully"
+    };
+
+  } catch (err) {
+
+    await db.query("ROLLBACK");
+    throw err;
+
+  }
+}
+
 async submitAppeal(assignmentId, staffId, appealedHours, reason) {
   const round = await roundService.getCurrentRound();
 

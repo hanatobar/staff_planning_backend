@@ -133,6 +133,7 @@ GetNonSubmitters: assignmentController.getNonSubmitters,
 GetUncoveredHours: assignmentController.getUncoveredHours,
 AssignUncoveredHours: assignmentController.assignUncoveredHours,
 TransferAssignmentHours: assignmentController.transferAssignmentHours,
+SwapAssignmentHours: assignmentController.swapAssignmentHours,
 SubmitAppeal: assignmentController.submitAppeal,
 GetAppealsByStaff: assignmentController.getAppealsByStaff,
 GetAllAppeals: assignmentController.getAllAppeals,
@@ -315,6 +316,9 @@ app.get("/assignments/uncovered-hours", (req, res) => assignmentHttpController.g
 
 app.post("/assignments/uncovered-hours/assign", (req, res) => assignmentHttpController.assignUncoveredHours(req, res));
 app.post("/assignments/transfer", (req, res) => assignmentHttpController.transferAssignmentHours(req, res));
+app.post("/assignments/swap", (req, res) =>
+  assignmentHttpController.swapAssignmentHours(req, res)
+);
 
 app.post("/assignments/appeals", (req, res) => assignmentHttpController.submitAppeal(req, res));
 app.get("/assignments/appeals/staff/:id", (req, res) => assignmentHttpController.getAppealsByStaff(req, res));

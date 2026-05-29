@@ -254,6 +254,34 @@ async transferAssignmentHours(req, res) {
   }
 }
 
+async swapAssignmentHours(req, res) {
+  try {
+
+    const {
+      sourceAssignmentId,
+      targetAssignmentId,
+      hours
+    } = req.body;
+
+    const result =
+      await service.swapAssignmentHours(
+        sourceAssignmentId,
+        targetAssignmentId,
+        hours
+      );
+
+    res.json(result);
+
+  } catch (err) {
+
+    console.error("❌ SWAP ERROR:", err.message);
+
+    res.status(400).json({
+      error: err.message
+    });
+  }
+}
+
 async assignUncoveredHours(req, res) {
   try {
     const { targetStaffId, courseId, hours } = req.body;

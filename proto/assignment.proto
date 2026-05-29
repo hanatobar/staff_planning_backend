@@ -13,6 +13,7 @@ service AssignmentService {
   rpc GetUncoveredHours (EmptyRequest) returns (UncoveredHourList);
   rpc AssignUncoveredHours (ManualUncoveredRequest) returns (Response);
   rpc TransferAssignmentHours (ManualTransferRequest) returns (Response);
+  rpc SwapAssignmentHours (SwapAssignmentRequest) returns (Response);
 
   rpc SubmitAppeal (SubmitAppealRequest) returns (Response);
   rpc GetAppealsByStaff (StaffRequest) returns (AppealList);
@@ -51,6 +52,11 @@ message ConflictList {
 message StaffRequest {
   int32 staffId = 1;
 }
+message SwapAssignmentRequest {
+  int32 sourceAssignmentId = 1;
+  int32 targetAssignmentId = 2;
+  int32 hours = 3;
+}
 
 message AssignmentList {
   repeated Assignment assignments = 1;
@@ -63,6 +69,7 @@ message AssignmentId {
 message Response {
   string message = 1;
 }
+
 
 message TAStat {
   int32 id = 1;
