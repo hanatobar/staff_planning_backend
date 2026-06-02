@@ -71,6 +71,7 @@ async getAllPreferences(round_id) {
     JOIN staff s ON p.staff_id = s.id
     JOIN course c ON p.course_id = c.id
     WHERE p.round_id = $1
+  AND LOWER(s.role) = 'ta'
     ORDER BY s.name, p.preference_level
   `;
 
