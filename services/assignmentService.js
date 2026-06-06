@@ -619,13 +619,13 @@ findConflict(conflicts, courseId, preferenceLevel) {
   calculateChunk(taRemaining, courseRemaining) {
     const maxPossible = Math.min( taRemaining, courseRemaining);
 
-    if (maxPossible >= 1) {
-      return 1;
+    if (maxPossible >= 2) {
+      return 2;
     }
 
 
 
-    return 0;
+    return maxPossible;
   }
 
 async runFallbackAssignment(
