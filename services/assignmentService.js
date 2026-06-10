@@ -1195,7 +1195,13 @@ async getUncoveredHours() {
   return data.filter(r => Number(r.uncovered_hours) > 0);
 }
 
-async assignUncoveredHours(targetStaffId, courseId, hours) {
+async assignUncoveredHours(
+  targetStaffId,
+  courseId,
+  hours,
+  releasedAssignments = []
+) {
+
   const round = await roundService.getCurrentRound();
 
   if (!round) {
@@ -1203,33 +1209,101 @@ async assignUncoveredHours(targetStaffId, courseId, hours) {
   }
 
   if (!round.is_locked) {
-    throw new Error("Manual assignment is allowed only after the round is locked");
+    throw new Error(
+      "Manual assignment is allowed only after the round is locked"
+    );
   }
 
   if (hours <= 0) {
-    throw new Error("Hours must be greater than zero");
+    throw new Error(
+      "Hours must be greater than zero"
+    );
   }
 
-const targetRes = await db.query(`
-  SELECT id
-  FROM staff
-  WHERE id = $1
-    AND LOWER(role) = 'ta'
-`, [targetStaffId]);
+  const targetRes = await db.query(`
+    SELECT id
+    FROM staff
+    WHERE id = $1
+      AND LOWER(role) = 'ta'
+  `, [targetStaffId]);
 
-if (targetRes.rows.length === 0) {
-  throw new Error("Target TA not found");
-}
+  if (targetRes.rows.length === 0) {
+    throw new Error("Target TA not found");
+  }
 
-  const uncovered = await repo.getUncoveredHoursByRound(round.id);
-  const course = uncovered.find(c => Number(c.course_id) === Number(courseId));
+  const uncovered =
+    await repo.getUncoveredHoursByRound(round.id);
+
+  const course =
+    uncovered.find(
+      c => Number(c.course_id) === Number(courseId)
+    );
 
   if (!course) {
     throw new Error("Course not found");
   }
 
-  if (Number(course.uncovered_hours) < Number(hours)) {
-    throw new Error("Requested hours exceed uncovered hours");
+  if (
+    Number(course.uncovered_hours) <
+    Number(hours)
+  ) {
+    throw new Error(
+      "Requested hours exceed uncovered hours"
+    );
+  }
+
+  let releasedHours = 0;
+
+  for (const item of releasedAssignments) {
+
+    const assignment =
+      await repo.getAssignmentByIdInRound(
+        item.assignmentId,
+        round.id
+      );
+
+    if (!assignment) {
+      throw new Error(
+        `Assignment ${item.assignmentId} not found`
+      );
+    }
+
+    if (
+      Number(assignment.staff_id) !==
+      Number(targetStaffId)
+    ) {
+      throw new Error(
+        "Released assignments must belong to the selected TA"
+      );
+    }
+
+    if (
+      Number(item.hours) <= 0
+    ) {
+      throw new Error(
+        "Released hours must be positive"
+      );
+    }
+
+    if (
+      Number(item.hours) >
+      Number(assignment.assigned_hours)
+    ) {
+      throw new Error(
+        "Released hours exceed assignment hours"
+      );
+    }
+
+    if (
+      Number(assignment.course_id) ===
+      Number(courseId)
+    ) {
+      throw new Error(
+        "Cannot release hours from the same target course"
+      );
+    }
+
+    releasedHours += Number(item.hours);
   }
 
   const workloadRes = await db.query(`
@@ -1238,28 +1312,91 @@ if (targetRes.rows.length === 0) {
     WHERE id = $1
   `, [targetStaffId]);
 
-  if (workloadRes.rows.length === 0) {
-    throw new Error("Target TA not found");
+  const maxWorkload =
+    Number(workloadRes.rows[0].max_workload);
+
+  const currentAssigned =
+    await repo.getTotalAssignedHoursForStaffInRound(
+      targetStaffId,
+      round.id
+    );
+
+  const finalWorkload =
+    currentAssigned -
+    releasedHours +
+    Number(hours);
+
+  if (finalWorkload > maxWorkload) {
+    throw new Error(
+      "Target TA would exceed max workload"
+    );
   }
 
-  const maxWorkload = Number(workloadRes.rows[0].max_workload);
-  const currentAssigned = await repo.getTotalAssignedHoursForStaffInRound(targetStaffId, round.id);
+  await db.query("BEGIN");
 
-  if (currentAssigned + Number(hours) > maxWorkload) {
-    throw new Error("Target TA would exceed max workload");
+  try {
+
+    for (const item of releasedAssignments) {
+
+      const assignment =
+        await repo.getAssignmentByIdInRound(
+          item.assignmentId,
+          round.id
+        );
+
+      const updated =
+        await repo.subtractHoursFromAssignment(
+          assignment.id,
+          item.hours
+        );
+
+      if (
+        Number(updated.assigned_hours) === 0
+      ) {
+        await repo.deleteAssignment(
+          updated.id
+        );
+      }
+    }
+
+    const existingManual =
+      await repo.getTargetManualAssignment(
+        round.id,
+        targetStaffId,
+        courseId
+      );
+
+    if (existingManual) {
+
+      await repo.addHoursToAssignment(
+        existingManual.id,
+        hours
+      );
+
+    } else {
+
+      await repo.insertManualAssignment(
+        targetStaffId,
+        courseId,
+        hours,
+        round.id
+      );
+    }
+
+    await db.query("COMMIT");
+
+    return {
+      message:
+        "Uncovered hours assigned successfully"
+    };
+
+  } catch (err) {
+
+    await db.query("ROLLBACK");
+    throw err;
+
   }
-
-  const existingManual = await repo.getTargetManualAssignment(round.id, targetStaffId, courseId);
-
-  if (existingManual) {
-    await repo.addHoursToAssignment(existingManual.id, hours);
-  } else {
-    await repo.insertManualAssignment(targetStaffId, courseId, hours, round.id);
-  }
-
-  return { message: "Uncovered hours assigned successfully" };
 }
-
 async transferAssignmentHours(sourceAssignmentId, targetStaffId, hours) {
   const round = await roundService.getCurrentRound();
 

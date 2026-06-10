@@ -284,19 +284,34 @@ async swapAssignmentHours(req, res) {
 
 async assignUncoveredHours(req, res) {
   try {
-    const { targetStaffId, courseId, hours } = req.body;
 
-    const result = await service.assignUncoveredHours(
+    const {
       targetStaffId,
       courseId,
-      hours
-    );
+      hours,
+      releasedAssignments
+    } = req.body;
+
+    const result =
+      await service.assignUncoveredHours(
+        targetStaffId,
+        courseId,
+        hours,
+        releasedAssignments || []
+      );
 
     res.json(result);
 
   } catch (err) {
-    console.error("❌ ASSIGN ERROR:", err.message);
-    res.status(500).json({ error: err.message });
+
+    console.error(
+      "❌ ASSIGN ERROR:",
+      err.message
+    );
+
+    res.status(500).json({
+      error: err.message
+    });
   }
 }
 

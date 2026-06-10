@@ -84,8 +84,6 @@ async swapAssignmentHours(call, callback) {
   }
 }
 
-
-
 async getAssignmentsByStaff(call, callback) {
   try {
     const data = await service.getAssignmentsByStaff(call.request.staffId);
@@ -181,11 +179,30 @@ async getUncoveredHours(call, callback) {
 
 async assignUncoveredHours(call, callback) {
   try {
-    const { targetStaffId, courseId, hours } = call.request;
-    const result = await service.assignUncoveredHours(targetStaffId, courseId, hours);
+
+    const {
+      targetStaffId,
+      courseId,
+      hours,
+      releasedAssignments
+    } = call.request;
+
+    const result =
+      await service.assignUncoveredHours(
+        targetStaffId,
+        courseId,
+        hours,
+        releasedAssignments || []
+      );
+
     callback(null, result);
+
   } catch (error) {
-    callback({ code: 500, message: error.message });
+
+    callback({
+      code: 500,
+      message: error.message
+    });
   }
 }
 

@@ -124,10 +124,17 @@ message UncoveredHourList {
   repeated UncoveredHour items = 1;
 }
 
+message ReleasedAssignment {
+  int32 assignmentId = 1;
+  int32 hours = 2;
+}
+
 message ManualUncoveredRequest {
   int32 targetStaffId = 1;
   int32 courseId = 2;
   int32 hours = 3;
+
+  repeated ReleasedAssignment releasedAssignments = 4;
 }
 
 message ManualTransferRequest {
