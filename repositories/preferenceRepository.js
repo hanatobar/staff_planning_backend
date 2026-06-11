@@ -65,14 +65,13 @@ async getAllPreferences(round_id) {
       p.staff_id,
       p.course_id,
       p.preference_level,
-      s.name AS staff_name,
+      COALESCE(s.name, CONCAT('Deleted TA #', p.staff_id)) AS staff_name,
       c.name AS course_name
     FROM preference p
-    JOIN staff s ON p.staff_id = s.id
+    LEFT JOIN staff s ON p.staff_id = s.id
     JOIN course c ON p.course_id = c.id
     WHERE p.round_id = $1
-  AND LOWER(s.role) = 'ta'
-    ORDER BY s.name, p.preference_level
+    ORDER BY COALESCE(s.name, CONCAT('Deleted TA #', p.staff_id)), p.preference_level
   `;
 
   const result = await db.query(query, [round_id]);
