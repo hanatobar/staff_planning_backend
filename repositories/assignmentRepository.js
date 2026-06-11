@@ -395,16 +395,23 @@ async getAppealById(id) {
   return result.rows[0] || null;
 }
 
-async reviewAppeal(appealId, status, coordinatorResponse, reviewedByUserId) {
+async reviewAppeal(
+  appealId,
+  status,
+  coordinatorResponse,
+  reviewedByUserId,
+  resolutionMethod = null
+) {
   const result = await db.query(`
     UPDATE assignment_appeal
     SET status = $1,
         coordinator_response = $2,
         reviewed_by_user_id = $3,
-        reviewed_at = CURRENT_TIMESTAMP
+        reviewed_at = CURRENT_TIMESTAMP,
+        resolution_method = $5
     WHERE id = $4
     RETURNING *
-  `, [status, coordinatorResponse, reviewedByUserId, appealId]);
+  `, [status, coordinatorResponse, reviewedByUserId, appealId, resolutionMethod]);
 
   return result.rows[0] || null;
 }

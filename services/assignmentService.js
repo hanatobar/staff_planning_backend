@@ -1481,6 +1481,10 @@ if (Number(updatedSource.assigned_hours) < 0) {
   throw new Error("Assignment hours became invalid");
 }
 
+if (Number(updatedSource.assigned_hours) === 0) {
+  await repo.deleteAssignment(updatedSource.id);
+}
+
   return { message: "Hours transferred successfully" };
 }
 
@@ -1795,12 +1799,25 @@ async resolveAppeal(
   reviewedByUserId,
   coordinatorResponse,
   redistributions,
-  compensations
+  compensations,
+  resolutionMethod = "REDISTRIBUTE_AND_COMPENSATE"
 ) {
 
+  const normalizedResolutionMethod =
+    String(
+      resolutionMethod || "REDISTRIBUTE_AND_COMPENSATE"
+    ).toUpperCase();
 
+  const allowedResolutionMethods = [
+    "REDISTRIBUTE_AND_COMPENSATE",
+    "RELEASE_TO_UNCOVERED"
+  ];
 
-    const round = await roundService.getCurrentRound();
+  if (!allowedResolutionMethods.includes(normalizedResolutionMethod)) {
+    throw new Error("Invalid appeal resolution method");
+  }
+
+  const round = await roundService.getCurrentRound();
 
   if (!round) {
     throw new Error("No current round found");
@@ -1830,6 +1847,61 @@ async resolveAppeal(
 
   if (Number(sourceAssignment.assigned_hours) < appealedHours) {
     throw new Error("Appealed hours exceed source assignment hours");
+  }
+
+  if (normalizedResolutionMethod === "RELEASE_TO_UNCOVERED") {
+    const updatedSource = await repo.subtractHoursFromAssignment(
+      sourceAssignment.id,
+      appealedHours
+    );
+
+    if (Number(updatedSource.assigned_hours) < 0) {
+      throw new Error("Assignment hours became invalid");
+    }
+
+    if (Number(updatedSource.assigned_hours) === 0) {
+  await repo.deleteAssignment(updatedSource.id);
+}
+
+    await repo.reviewAppeal(
+      appeal.id,
+      "RESOLVED",
+      coordinatorResponse || "",
+      reviewedByUserId,
+      normalizedResolutionMethod
+    );
+
+    const staffRes = await db.query(`
+      SELECT user_id
+      FROM staff
+      WHERE id = $1
+    `, [appeal.staff_id]);
+
+    if (staffRes.rows.length > 0 && staffRes.rows[0].user_id) {
+      const title = "Appeal Resolved";
+
+      const body =
+        coordinatorResponse && coordinatorResponse.trim()
+          ? `Your appeal has been resolved. The appealed ${appealedHours} hour(s) were released and returned to the course's uncovered hours pool. Coordinator response: ${coordinatorResponse}`
+          : `Your appeal has been resolved. The appealed ${appealedHours} hour(s) were released and returned to the course's uncovered hours pool.`;
+
+      try {
+        await notificationService.createSystemNotification(
+          Number(staffRes.rows[0].user_id),
+          title,
+          body,
+          "APPEAL_REVIEWED",
+          appeal.round_id,
+          appeal.assignment_id
+        );
+      } catch (err) {
+        console.error("APPEAL RESOLUTION NOTIFICATION ERROR:", err);
+      }
+    }
+
+    return {
+      message: "Appeal resolved and released to uncovered hours successfully"
+    };
   }
 
   if (!Array.isArray(redistributions) || redistributions.length === 0) {
@@ -2030,6 +2102,10 @@ if (Number(updatedSource.assigned_hours) < 0) {
 if (Number(updatedTransferSource.assigned_hours) < 0) {
   throw new Error("Assignment hours became invalid");
 }
+
+if (Number(updatedTransferSource.assigned_hours) === 0) {
+  await repo.deleteAssignment(updatedTransferSource.id);
+}
       } else {
         throw new Error(`Invalid compensation source type: ${sourceType}`);
       }
@@ -2104,9 +2180,10 @@ for (const staffId of affectedStaffIds) {
 }
 await repo.reviewAppeal(
   appeal.id,
-  "APPROVED",
+  "RESOLVED",
   coordinatorResponse || "",
-  reviewedByUserId
+  reviewedByUserId,
+  normalizedResolutionMethod
 );
   const staffRes = await db.query(`
     SELECT user_id
@@ -2115,7 +2192,7 @@ await repo.reviewAppeal(
   `, [appeal.staff_id]);
 
   if (staffRes.rows.length > 0 && staffRes.rows[0].user_id) {
-const title = "Appeal Approved";
+const title = "Appeal Resolved";
 
 let compensationSummary = "No compensation was added.";
 
@@ -2161,8 +2238,8 @@ if (Array.isArray(compensations) && compensations.length > 0) {
 
 const body =
   coordinatorResponse && coordinatorResponse.trim()
-    ? `Your appeal has been approved. Compensation: ${compensationSummary}. Coordinator response: ${coordinatorResponse}`
-    : `Your appeal has been approved. Compensation: ${compensationSummary}`;
+    ? `Your appeal has been resolved through redistribution and compensation. Compensation: ${compensationSummary}. Coordinator response: ${coordinatorResponse}`
+    : `Your appeal has been resolved through redistribution and compensation. Compensation: ${compensationSummary}`;
     try {
       await notificationService.createSystemNotification(
         Number(staffRes.rows[0].user_id),
@@ -2194,6 +2271,7 @@ async getAppealDetails(appealId) {
   const compensations = await repo.getAppealCompensations(appealId);
 
   return {
+    appeal,
     redistributions,
     compensations
   };

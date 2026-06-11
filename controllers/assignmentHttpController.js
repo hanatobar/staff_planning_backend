@@ -124,7 +124,8 @@ const formatted = data.map(a => ({
   appealedHours: a.appealed_hours,
   reason: a.reason,
   status: a.status,
-  coordinatorResponse: a.coordinator_response || ""
+  coordinatorResponse: a.coordinator_response || "",
+  resolutionMethod: a.resolution_method || ""
 }));
 
 res.json(formatted);
@@ -153,6 +154,8 @@ async getAppealDetails(req, res) {
     }));
 
     res.json({
+      resolutionMethod: data.appeal?.resolution_method || "",
+      status: data.appeal?.status || "",
       redistributions,
       compensations
     });
@@ -217,7 +220,8 @@ async resolveAppeal(req, res) {
       reviewedByUserId,
       coordinatorResponse,
       redistributions,
-      compensations
+      compensations,
+      resolutionMethod
     } = req.body;
 
     const result = await service.resolveAppeal(
@@ -225,7 +229,8 @@ async resolveAppeal(req, res) {
       Number(reviewedByUserId),
       coordinatorResponse,
       redistributions,
-      compensations
+      compensations,
+      resolutionMethod
     );
 
     res.json(result);

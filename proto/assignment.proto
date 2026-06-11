@@ -171,6 +171,7 @@ message Appeal {
   string reviewedAt = 11;
   string staffName = 12;
   string courseName = 13;
+  string resolutionMethod = 14;
 }
 
 message AppealList {
@@ -195,6 +196,7 @@ message ResolveAppealRequest {
   string coordinatorResponse = 3;
   repeated AppealRedistributionItem redistributions = 4;
   repeated AppealCompensationItem compensations = 5;
+  string resolutionMethod = 6;
 }
 
 message AppealIdRequest {
@@ -224,6 +226,7 @@ message AppealCompensationDetail {
 message AppealDetailsResponse {
   repeated AppealRedistributionDetail redistributions = 1;
   repeated AppealCompensationDetail compensations = 2;
+  string resolutionMethod = 3;
 }
 
 message EmptyRequest {}

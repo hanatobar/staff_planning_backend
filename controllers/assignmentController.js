@@ -66,7 +66,7 @@ async swapAssignmentHours(call, callback) {
   try {
 
     const result =
-      await assignmentService.swapAssignmentHours(
+      await service.swapAssignmentHours(
         call.request.sourceAssignmentId,
         call.request.targetAssignmentId,
         call.request.hours
@@ -77,7 +77,7 @@ async swapAssignmentHours(call, callback) {
   } catch (err) {
 
     callback({
-      code: grpc.status.INVALID_ARGUMENT,
+      code: status.INVALID_ARGUMENT,
       message: err.message
     });
 
@@ -249,6 +249,7 @@ async getAppealsByStaff(call, callback) {
       reviewedAt: a.reviewed_at ? new Date(a.reviewed_at).toISOString() : "",
       staffName: a.staff_name || "",
       courseName: a.course_name || "",
+      resolutionMethod: a.resolution_method || "",
     }));
 
     callback(null, { appeals: formatted });
@@ -275,6 +276,7 @@ async getAllAppeals(call, callback) {
       reviewedAt: a.reviewed_at ? new Date(a.reviewed_at).toISOString() : "",
       staffName: a.staff_name || "",
       courseName: a.course_name || "",
+      resolutionMethod: a.resolution_method || "",
     }));
 
     callback(null, { appeals: formatted });
@@ -305,7 +307,8 @@ async resolveAppeal(call, callback) {
       reviewedByUserId,
       coordinatorResponse,
       redistributions,
-      compensations
+      compensations,
+      resolutionMethod
     } = call.request;
 
     const result = await service.resolveAppeal(
@@ -313,7 +316,8 @@ async resolveAppeal(call, callback) {
       reviewedByUserId,
       coordinatorResponse,
       redistributions,
-      compensations
+      compensations,
+      resolutionMethod
     );
 
     callback(null, result);
@@ -347,6 +351,7 @@ async getAppealDetails(call, callback) {
     }));
 
     callback(null, {
+      resolutionMethod: data.appeal?.resolution_method || "",
       redistributions: formattedRedistributions,
       compensations: formattedCompensations,
     });
