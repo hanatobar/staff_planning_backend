@@ -1359,21 +1359,21 @@ async assignUncoveredHours(
       }
     }
 
-    const existingManual =
-      await repo.getTargetManualAssignment(
-        round.id,
-        targetStaffId,
-        courseId
-      );
+const existingAssignment =
+  await repo.getTargetAssignment(
+    round.id,
+    targetStaffId,
+    courseId
+  );
 
-    if (existingManual) {
+if (existingAssignment) {
 
-      await repo.addHoursToAssignment(
-        existingManual.id,
-        hours
-      );
+  await repo.addHoursToAssignment(
+    existingAssignment.id,
+    hours
+  );
 
-    } else {
+} else {
 
       await repo.insertManualAssignment(
         targetStaffId,
@@ -1454,22 +1454,26 @@ if (targetRes.rows.length === 0) {
     throw new Error("Target TA would exceed max workload");
   }
 
-  const existingManual = await repo.getTargetManualAssignment(
+const existingAssignment =
+  await repo.getTargetAssignment(
     round.id,
     targetStaffId,
     source.course_id
   );
 
-  if (existingManual) {
-    await repo.addHoursToAssignment(existingManual.id, hours);
-  } else {
-    await repo.insertManualAssignment(
-      targetStaffId,
-      source.course_id,
-      hours,
-      round.id
-    );
-  }
+if (existingAssignment) {
+  await repo.addHoursToAssignment(
+    existingAssignment.id,
+    hours
+  );
+} else {
+  await repo.insertManualAssignment(
+    targetStaffId,
+    source.course_id,
+    hours,
+    round.id
+  );
+}
 
   const updatedSource = await repo.subtractHoursFromAssignment(source.id, hours);
 

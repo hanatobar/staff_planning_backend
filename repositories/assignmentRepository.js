@@ -196,6 +196,20 @@ async getTargetManualAssignment(roundId, staffId, courseId) {
   return result.rows[0] || null;
 }
 
+async getTargetAssignment(roundId, staffId, courseId) {
+  const result = await db.query(`
+    SELECT *
+    FROM assignment
+    WHERE round_id = $1
+      AND staff_id = $2
+      AND course_id = $3
+      AND assigned_hours > 0
+    LIMIT 1
+  `, [roundId, staffId, courseId]);
+
+  return result.rows[0] || null;
+}
+
 async deleteZeroHourAssignmentsByRound(roundId) {
   await db.query(`
     UPDATE notification
