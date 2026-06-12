@@ -343,9 +343,9 @@ async getAppealsByStaff(staffId, roundId = null) {
       s.name AS staff_name,
       c.name AS course_name
     FROM assignment_appeal aa
-    JOIN staff s ON s.id = aa.staff_id
-    JOIN assignment a ON a.id = aa.assignment_id
-    JOIN course c ON c.id = a.course_id
+JOIN staff s ON s.id = aa.staff_id
+LEFT JOIN assignment a ON a.id = aa.assignment_id
+LEFT JOIN course c ON c.id = a.course_id
     WHERE aa.staff_id = $1
   `;
   const values = [staffId];
@@ -368,9 +368,9 @@ async getAllAppeals(roundId = null) {
       s.name AS staff_name,
       c.name AS course_name
     FROM assignment_appeal aa
-    JOIN staff s ON s.id = aa.staff_id
-    JOIN assignment a ON a.id = aa.assignment_id
-    JOIN course c ON c.id = a.course_id
+JOIN staff s ON s.id = aa.staff_id
+LEFT JOIN assignment a ON a.id = aa.assignment_id
+LEFT JOIN course c ON c.id = a.course_id
   `;
   const values = [];
 

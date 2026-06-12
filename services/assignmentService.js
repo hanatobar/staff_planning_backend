@@ -289,7 +289,7 @@ for (const conflict of conflicts) {
   if (conflict.chosenStaffId === null) {
     conflict.status = "SKIPPED";
   } else {
-    conflict.status = "RESOLVED";
+    conflict.status = "APPROVED";
   }
 }
 
@@ -1865,7 +1865,7 @@ async resolveAppeal(
 
     await repo.reviewAppeal(
       appeal.id,
-      "RESOLVED",
+      "APPROVED",
       coordinatorResponse || "",
       reviewedByUserId,
       normalizedResolutionMethod
@@ -1878,12 +1878,12 @@ async resolveAppeal(
     `, [appeal.staff_id]);
 
     if (staffRes.rows.length > 0 && staffRes.rows[0].user_id) {
-      const title = "Appeal Resolved";
+      const title = "Appeal Approved";
 
       const body =
         coordinatorResponse && coordinatorResponse.trim()
-          ? `Your appeal has been resolved. The appealed ${appealedHours} hour(s) were released and returned to the course's uncovered hours pool. Coordinator response: ${coordinatorResponse}`
-          : `Your appeal has been resolved. The appealed ${appealedHours} hour(s) were released and returned to the course's uncovered hours pool.`;
+          ? `Your appeal has been approved. The appealed ${appealedHours} hour(s) were released and returned to the course's uncovered hours pool. Coordinator response: ${coordinatorResponse}`
+          : `Your appeal has been approved. The appealed ${appealedHours} hour(s) were released and returned to the course's uncovered hours pool.`;
 
       try {
         await notificationService.createSystemNotification(
@@ -1900,7 +1900,7 @@ async resolveAppeal(
     }
 
     return {
-      message: "Appeal resolved and released to uncovered hours successfully"
+      message: "Appeal approved and released to uncovered hours successfully"
     };
   }
 
@@ -2180,7 +2180,7 @@ for (const staffId of affectedStaffIds) {
 }
 await repo.reviewAppeal(
   appeal.id,
-  "RESOLVED",
+  "APPROVED",
   coordinatorResponse || "",
   reviewedByUserId,
   normalizedResolutionMethod
@@ -2192,7 +2192,7 @@ await repo.reviewAppeal(
   `, [appeal.staff_id]);
 
   if (staffRes.rows.length > 0 && staffRes.rows[0].user_id) {
-const title = "Appeal Resolved";
+const title = "Appeal Approved";
 
 let compensationSummary = "No compensation was added.";
 
@@ -2238,8 +2238,8 @@ if (Array.isArray(compensations) && compensations.length > 0) {
 
 const body =
   coordinatorResponse && coordinatorResponse.trim()
-    ? `Your appeal has been resolved through redistribution and compensation. Compensation: ${compensationSummary}. Coordinator response: ${coordinatorResponse}`
-    : `Your appeal has been resolved through redistribution and compensation. Compensation: ${compensationSummary}`;
+    ? `Your appeal has been approved through redistribution and compensation. Compensation: ${compensationSummary}. Coordinator response: ${coordinatorResponse}`
+    : `Your appeal has been approved through redistribution and compensation. Compensation: ${compensationSummary}`;
     try {
       await notificationService.createSystemNotification(
         Number(staffRes.rows[0].user_id),
@@ -2255,7 +2255,7 @@ const body =
   }
 
 
-return { message: "Appeal resolved successfully" };
+return { message: "Appeal approved successfully" };
 
 
 }

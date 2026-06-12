@@ -153,12 +153,15 @@ async getAppealDetails(req, res) {
       hours: c.hours
     }));
 
-    res.json({
-      resolutionMethod: data.appeal?.resolution_method || "",
-      status: data.appeal?.status || "",
-      redistributions,
-      compensations
-    });
+res.json({
+  resolutionMethod: data.appeal?.resolution_method || "",
+  status: data.appeal?.status || "",
+  appealedHours: data.appeal?.appealed_hours || 0,
+  coordinatorResponse:
+      data.appeal?.coordinator_response || "",
+  redistributions,
+  compensations
+});
 
   } catch (err) {
     console.error("DETAILS ERROR:", err);
