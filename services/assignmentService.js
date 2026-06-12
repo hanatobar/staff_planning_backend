@@ -1862,8 +1862,11 @@ async resolveAppeal(
       throw new Error("Assignment hours became invalid");
     }
 
-    if (Number(updatedSource.assigned_hours) === 0) {
-  await repo.deleteAssignment(updatedSource.id);
+if (Number(updatedSource.assigned_hours) === 0) {
+  await repo.updateAssignmentHours(
+    updatedSource.id,
+    0
+  );
 }
 
     await repo.reviewAppeal(
