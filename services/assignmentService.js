@@ -1482,7 +1482,10 @@ if (Number(updatedSource.assigned_hours) < 0) {
 }
 
 if (Number(updatedSource.assigned_hours) === 0) {
-  await repo.deleteAssignment(updatedSource.id);
+  await repo.updateAssignmentHours(
+    updatedSource.id,
+    0
+  );
 }
 
   return { message: "Hours transferred successfully" };
@@ -2104,7 +2107,10 @@ if (Number(updatedTransferSource.assigned_hours) < 0) {
 }
 
 if (Number(updatedTransferSource.assigned_hours) === 0) {
-  await repo.deleteAssignment(updatedTransferSource.id);
+  await repo.updateAssignmentHours(
+    updatedTransferSource.id,
+    0
+  );
 }
       } else {
         throw new Error(`Invalid compensation source type: ${sourceType}`);
