@@ -508,26 +508,42 @@ async getAppealRedistributions(appealId) {
 async getAppealCompensations(appealId) {
   const result = await db.query(`
     SELECT
-      ac.id,
-      ac.appeal_id,
-      ac.source_type,
-      ac.course_id,
-      COALESCE(c_direct.name, c_from_assignment.name) AS course_name,
-      ac.source_assignment_id,
-      sa.staff_id AS source_staff_id,
-      ss.name AS source_staff_name,
-      ac.hours
-    FROM assignment_appeal_compensation ac
-    LEFT JOIN course c_direct
-      ON c_direct.id = ac.course_id
-    LEFT JOIN assignment sa
-      ON sa.id = ac.source_assignment_id
-    LEFT JOIN course c_from_assignment
-      ON c_from_assignment.id = sa.course_id
-    LEFT JOIN staff ss
-      ON ss.id = sa.staff_id
-    WHERE ac.appeal_id = $1
-    ORDER BY ac.id
+  ac.id,
+  ac.appeal_id,
+  ac.source_type,
+
+  ac.course_id,
+
+  COALESCE(
+    c_direct.name,
+    c_from_assignment.name
+  ) AS course_name,
+
+  ac.source_assignment_id,
+
+  sa.staff_id AS source_staff_id,
+  ss.name AS source_staff_name,
+
+  sa.assigned_hours AS current_assignment_hours,
+
+  ac.hours
+
+FROM assignment_appeal_compensation ac
+
+LEFT JOIN course c_direct
+  ON c_direct.id = ac.course_id
+
+LEFT JOIN assignment sa
+  ON sa.id = ac.source_assignment_id
+
+LEFT JOIN course c_from_assignment
+  ON c_from_assignment.id = sa.course_id
+
+LEFT JOIN staff ss
+  ON ss.id = sa.staff_id
+
+WHERE ac.appeal_id = $1
+ORDER BY ac.id
   `, [appealId]);
 
   return result.rows;

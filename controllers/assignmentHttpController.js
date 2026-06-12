@@ -147,11 +147,14 @@ async getAppealDetails(req, res) {
     }));
 
     const compensations = (data.compensations || []).map(c => ({
-      sourceType: c.source_type,
-      courseName: c.course_name,           // ✅ FIXED
-      sourceStaffName: c.source_staff_name, // ✅ FIXED
-      hours: c.hours
-    }));
+  sourceType: c.source_type,
+  courseName: c.course_name,
+  sourceStaffName: c.source_staff_name,
+  sourceAssignmentId: c.source_assignment_id,
+  currentAssignmentHours:
+    c.current_assignment_hours,
+  hours: c.hours
+}));
 
 res.json({
   resolutionMethod: data.appeal?.resolution_method || "",
