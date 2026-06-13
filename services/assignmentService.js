@@ -206,27 +206,29 @@ if (eligible.length > 1) {
   }
 }
 
+const selectionMode = this.getSelectionMode(conflictMode, levelPrefs);
+
 const minAssigned = Math.min(
   ...Object.values(taMap).map(t => t.assignedHours)
 );
 
-const filteredEligible = eligible.filter((ta) => {
-  const loadRatio =
-    ta.maxWorkload === 0
-      ? 1
-      : ta.assignedHours / ta.maxWorkload;
+if (selectionMode !== "PRIORITY") {
 
-  // Prevent one TA from dominating too early
-  const fairnessGuard =
-    ta.assignedHours <= minAssigned + 4;
+  const filteredEligible = eligible.filter((ta) => {
+    const loadRatio =
+      ta.maxWorkload === 0
+        ? 1
+        : ta.assignedHours / ta.maxWorkload;
 
-  return loadRatio < 0.9 && fairnessGuard;
-});
+    const fairnessGuard =
+      ta.assignedHours <= minAssigned + 4;
 
-// If fairness filtering removes everyone,
-// restore original eligible list
-if (filteredEligible.length > 0) {
-  eligible = filteredEligible;
+    return loadRatio < 0.9 && fairnessGuard;
+  });
+
+  if (filteredEligible.length > 0) {
+    eligible = filteredEligible;
+  }
 }
 
 
@@ -234,7 +236,6 @@ if (!eligible.length) {
   continue;
 }
 
-const selectionMode = this.getSelectionMode(conflictMode, levelPrefs);
 
 const allowRandomTieBreak = this.shouldAllowRandomTieBreak(
   conflictMode,
@@ -395,40 +396,36 @@ sortEligibleTAs(eligible, mode, options = {}) {
         : b.assignedHours / b.maxWorkload;
 
     // better preference fairness balance
-    const priorityWeight =
-      mode === "PRIORITY" ? 0.4 : 0.05;
+   if (mode === "PRIORITY") {
 
-    const fairnessWeight = 1 - priorityWeight;
+  // Highest priority rank wins
+  if (a.priorityRank !== b.priorityRank) {
+    return a.priorityRank - b.priorityRank;
+  }
 
-    const normalizedPriorityA =
-      1 / Math.max((a.priorityRank || 999), 1);
+  // If same priority, give hours to less loaded TA
+  if (a.assignedHours !== b.assignedHours) {
+    return a.assignedHours - b.assignedHours;
+  }
 
-    const normalizedPriorityB =
-      1 / Math.max((b.priorityRank || 999), 1);
+  return a.id - b.id;
+}
 
-    const scoreA =
-      normalizedPriorityA * priorityWeight -
-      ratioA * fairnessWeight;
+// FAIRNESS MODE
 
-    const scoreB =
-      normalizedPriorityB * priorityWeight -
-      ratioB * fairnessWeight;
+if (ratioA !== ratioB) {
+  return ratioA - ratioB;
+}
 
-    // higher score first
-    if (scoreA !== scoreB) {
-      return scoreB - scoreA;
-    }
+if (a.assignedHours !== b.assignedHours) {
+  return a.assignedHours - b.assignedHours;
+}
 
-    // fewer assigned hours
-    if (a.assignedHours !== b.assignedHours) {
-      return a.assignedHours - b.assignedHours;
-    }
+if (allowRandomTieBreak) {
+  return Math.random() - 0.5;
+}
 
-    if (allowRandomTieBreak) {
-      return Math.random() - 0.5;
-    }
-
-    return a.id - b.id;
+return a.id - b.id;
   });
 
   return eligible;
@@ -475,9 +472,12 @@ rebalanceAssignmentsForFairness(
         const key = `${a.staffId}-${a.courseId}`;
 
         // In PRIORITY mode, keep at least 1 hour for the protected winner
-        if (protectedAssignments.has(key) && Number(a.hours) <= 1) {
-          return false;
-        }
+      if (
+  protectedAssignments.has(key)
+)
+{
+  return false;
+}
 
         return true;
       })
