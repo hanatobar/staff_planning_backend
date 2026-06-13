@@ -10,6 +10,8 @@ service AuthService {
   rpc CheckInitialPasswordStatus (EmailRequest) returns (InitialPasswordStatusResponse);
   rpc CreateCoordinator (CreateCoordinatorRequest) returns (AuthResponse);
   rpc DeleteCoordinator (EmptyRequest) returns (AuthResponse);
+  rpc ValidateSession (ValidateSessionRequest)
+returns (ValidateSessionResponse);
 }
 
 message SignupRequest {
@@ -61,4 +63,12 @@ message InitialPasswordStatusResponse {
   bool accountExists = 2;
   bool requiresInitialPassword = 3;
   string role = 4;
+}
+
+message ValidateSessionRequest {
+  int32 userId = 1;
+}
+
+message ValidateSessionResponse {
+  bool valid = 1;
 }

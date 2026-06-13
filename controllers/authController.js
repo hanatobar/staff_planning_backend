@@ -184,6 +184,24 @@ async function loginHttp(email, password) {
   }
 }
 
+async function validateSession(call, callback) {
+  try {
+    const result =
+      await authService.validateSession(
+        call.request.userId
+      );
+
+    callback(null, {
+      valid: result.valid
+    });
+
+  } catch (error) {
+    callback(null, {
+      valid: false
+    });
+  }
+}
+
 module.exports = {
   signup,
   login,
@@ -193,5 +211,6 @@ module.exports = {
   createCoordinator,
   deleteCoordinator,
   loginHttp,
-  forgotPassword
+  forgotPassword,
+  validateSession
 };

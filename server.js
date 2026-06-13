@@ -210,6 +210,26 @@ const result = await authService.login(email, password);
   }
 });
 
+app.post("/auth/validate-session", async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    const result =
+      await authService.validateSession(
+        Number(userId)
+      );
+
+    res.json(result);
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      valid: false
+    });
+  }
+});
+
 app.post("/signup", async (req, res) => {
   try {
     const { name, email, password, role } = req.body;

@@ -92,6 +92,29 @@ async function checkInitialPasswordStatus(email) {
   };
 }
 
+async function validateSession(userId) {
+  const result = await db.query(
+    `
+    SELECT role
+    FROM users
+    WHERE id = $1
+    `,
+    [userId]
+  );
+
+  if (result.rows.length === 0) {
+    return { valid: false };
+  }
+
+  const role = result.rows[0].role;
+
+  if (role === "DELETED_TA") {
+    return { valid: false };
+  }
+
+  return { valid: true };
+}
+
 async function setInitialPassword(email, password) {
   const result = await db.query(
     "SELECT * FROM users WHERE email = $1",
@@ -263,5 +286,6 @@ module.exports = {
   checkInitialPasswordStatus,
   createCoordinator,
   deleteCoordinator,
-  forgotPassword
+  forgotPassword,
+  validateSession
 };
