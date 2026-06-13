@@ -290,7 +290,7 @@ for (const conflict of conflicts) {
   if (conflict.chosenStaffId === null) {
     conflict.status = "SKIPPED";
   } else {
-    conflict.status = "APPROVED";
+    conflict.status = "RESOLVED";
   }
 }
 
@@ -324,7 +324,7 @@ this.rebalanceAssignmentsForFairness(
   assignmentMap,
   taMap,
   preferenceLookup,
-  2,
+  1,
   protectedAssignments,
   2
 );
